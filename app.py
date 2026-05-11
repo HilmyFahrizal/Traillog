@@ -501,14 +501,13 @@ section[data-testid="stSidebar"]{display:none!important;}
                     st.error("❌ Email tidak dikenali. Hubungi admin trip kamu.")
                     st.markdown('</div>',unsafe_allow_html=True)
                     st.markdown("</div>",unsafe_allow_html=True)
-                    st.caption("Admin: {}".format(ADMIN_EMAIL)); return
+                    return
             st.session_state["logged_in_email"]=email
             st.session_state["logged_in_role"]=user["role"]
             st.session_state["page"]="dashboard"; st.rerun()
     st.markdown('</div>',unsafe_allow_html=True)
     st.markdown("</div>",unsafe_allow_html=True)
     st.markdown("<br>",unsafe_allow_html=True)
-    st.caption("Admin: {}".format(ADMIN_EMAIL))
 
 # ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 def render_sidebar():
@@ -622,6 +621,8 @@ def render_sidebar():
             st.markdown('<div class="btn-danger">', unsafe_allow_html=True)
             if st.button("Keluar",key="sb_logout",use_container_width=True):
                 for k in ["logged_in_email","logged_in_role","page"]: st.session_state.pop(k,None)
+                try: st.query_params.clear()
+                except Exception: pass
                 st.rerun()
             st.markdown("</div>",unsafe_allow_html=True)
 
