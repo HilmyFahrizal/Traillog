@@ -463,26 +463,89 @@ def wilayah_form(prefix, d=None):
 def page_login():
     st.markdown("""<style>
 section[data-testid="stSidebar"]{display:none!important;}
-.main .block-container{max-width:420px!important;padding:80px 20px 40px!important;}
-</style>""", unsafe_allow_html=True)
-    st.markdown("""
-<div style="text-align:center;margin-bottom:32px;">
-  <div style="width:80px;height:80px;margin:0 auto 20px;
-    background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:22px;
-    display:flex;align-items:center;justify-content:center;font-size:40px;
-    box-shadow:0 12px 40px rgba(59,130,246,.5);">⛰️</div>
-  <div style="font-size:32px;font-weight:800;color:#e2eaf5;letter-spacing:-.04em;
-    font-family:'Plus Jakarta Sans',sans-serif;">TrailLog</div>
-  <div style="font-size:14px;color:#4a6080;margin-top:8px;">Platform manajemen pendakian</div>
-</div>
-<div style="background:#111720;border:1px solid #243044;border-radius:18px;
-  padding:32px 28px;box-shadow:0 16px 60px rgba(0,0,0,.6);">
+.main .block-container{
+  max-width:100%!important;
+  padding:0!important;
+  margin:0!important;
+}
+.login-wrap{
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 0%,rgba(59,130,246,.12) 0%,transparent 65%),#0b0f14;
+}
+.login-card{
+  width:100%;max-width:400px;
+  background:#111720;
+  border:1px solid #243044;
+  border-radius:20px;
+  padding:40px 36px 36px;
+  box-shadow:0 24px 80px rgba(0,0,0,.7);
+  margin:40px 16px;
+}
+.login-logo{
+  width:72px;height:72px;margin:0 auto 18px;
+  background:linear-gradient(135deg,#1d4ed8,#3b82f6);
+  border-radius:20px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;
+  box-shadow:0 8px 32px rgba(59,130,246,.45);
+}
+.login-title{
+  font-size:30px;font-weight:800;color:#e2eaf5;
+  letter-spacing:-.04em;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  text-align:center;margin-bottom:4px;
+}
+.login-sub{
+  font-size:13px;color:#4a6080;text-align:center;margin-bottom:28px;
+}
+.login-label{
+  font-size:13px;font-weight:600;color:#8aa0c0;margin-bottom:6px;
+}
+.login-divider{
+  display:flex;align-items:center;gap:10px;margin:18px 0;
+}
+.login-divider span{font-size:11px;color:#2e3f58;white-space:nowrap;}
+.login-divider hr{flex:1;border:none;border-top:1px solid #243044;}
+/* Override streamlit input inside login */
+.login-card .stTextInput input{
+  background:#161e2a!important;
+  border:1px solid #2e3f58!important;
+  border-radius:10px!important;
+  color:#e2eaf5!important;
+  font-size:14px!important;
+  padding:12px 14px!important;
+}
+.login-card .stTextInput input:focus{
+  border-color:#3b82f6!important;
+  box-shadow:0 0 0 3px rgba(59,130,246,.15)!important;
+}
+.login-card .stButton>button{
+  background:linear-gradient(135deg,#1d4ed8,#3b82f6)!important;
+  color:#fff!important;
+  border:none!important;
+  border-radius:10px!important;
+  font-size:14px!important;font-weight:700!important;
+  padding:12px!important;
+  box-shadow:0 4px 20px rgba(59,130,246,.35)!important;
+  transition:all .2s!important;
+}
+.login-card .stButton>button:hover{
+  box-shadow:0 6px 28px rgba(59,130,246,.55)!important;
+  transform:translateY(-1px)!important;
+}
+</style>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">⛰️</div>
+    <div class="login-title">TrailLog</div>
+    <div class="login-sub">Platform manajemen pendakian kelompok</div>
+    <div class="login-divider"><hr><span>Masuk dengan email</span><hr></div>
+    <div class="login-label">Alamat Email</div>
 """, unsafe_allow_html=True)
-    st.markdown("<div style='font-size:15px;font-weight:700;color:#e2eaf5;margin-bottom:4px;'>Masuk dengan Email</div>", unsafe_allow_html=True)
-    st.caption("Tidak perlu password — cukup email terdaftar")
-    email_in = st.text_input("Email", placeholder="namakamu@email.com",
+    email_in = st.text_input("Email", placeholder="email@email.com",
         label_visibility="collapsed", key="login_email_input")
-    st.markdown('<div class="btn-ok">', unsafe_allow_html=True)
+    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
     if st.button("Masuk ke TrailLog →", use_container_width=True, key="login_btn"):
         email = email_in.strip().lower()
         if not email or "@" not in email:
@@ -499,15 +562,14 @@ section[data-testid="stSidebar"]{display:none!important;}
                     user=L.get_user_by_email(email)
                 else:
                     st.error("❌ Email tidak dikenali. Hubungi admin trip kamu.")
-                    st.markdown('</div>',unsafe_allow_html=True)
-                    st.markdown("</div>",unsafe_allow_html=True)
+                    st.markdown("</div></div>", unsafe_allow_html=True)
                     return
             st.session_state["logged_in_email"]=email
             st.session_state["logged_in_role"]=user["role"]
             st.session_state["page"]="dashboard"; st.rerun()
-    st.markdown('</div>',unsafe_allow_html=True)
-    st.markdown("</div>",unsafe_allow_html=True)
-    st.markdown("<br>",unsafe_allow_html=True)
+    st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px;color:#2e3f58;text-align:center;'>Belum terdaftar? Hubungi admin tripmu.</div>", unsafe_allow_html=True)
+    st.markdown("</div></div>", unsafe_allow_html=True)
 
 # ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 def render_sidebar():
