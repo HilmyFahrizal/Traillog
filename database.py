@@ -12,7 +12,8 @@ import psycopg2.extras
 import psycopg2.pool
 import streamlit as st
 
-ADMIN_EMAIL = "hilmyfahrizal5@gmail.com"
+ADMIN_EMAIL  = "hilmyfahrizal5@gmail.com"   # kept for backward-compat
+ADMIN_EMAILS = ["hilmyfahrizal5@gmail.com", "aullianur794@gmail.com"]
 
 _pool = None
 
@@ -849,7 +850,7 @@ def seed_from_sql():
         # ── Seed users ────────────────────────────────────────────────────────
         users = [
             ('hilmyfahrizal5@gmail.com',          'admin'),
-            ('aullianur794@gmail.com',             'member'),
+            ('aullianur794@gmail.com',             'admin'),
             ('oncom.86ali@gmail.com',              'member'),
             ('herawativicka5@gmail.com',           'member'),
             ('mhmmdhzakyyy@gmail.com',             'member'),

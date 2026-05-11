@@ -7,7 +7,7 @@ import streamlit as st
 import pandas as pd
 from datetime import date, timedelta, time as dtime
 
-from database import init_database, ADMIN_EMAIL, init_timeline_table, init_bank_table, seed_from_sql
+from database import init_database, ADMIN_EMAIL, ADMIN_EMAILS, init_timeline_table, init_bank_table, seed_from_sql
 import logic as L
 
 st.set_page_config(page_title="TrailLog", page_icon="⛰️", layout="wide",
@@ -297,7 +297,9 @@ def confirm_del(key, on_confirm, label="🗑️", msg="Yakin hapus?"):
 
 # ─── AUTH ─────────────────────────────────────────────────────────────────────
 def get_email():   return st.session_state.get("logged_in_email","")
-def is_admin_user(): return get_email().strip().lower() == ADMIN_EMAIL.strip().lower()
+def is_admin_user():
+    em = get_email().strip().lower()
+    return any(em == a.lower() for a in ADMIN_EMAILS)
 
 def trip_selector(label="Pilih Trip"):
     email = get_email()
@@ -1845,18 +1847,21 @@ def page_rekap():
                 if admin:
                     # Admin: hitung dari semua anggota
                     tg_gross=sum(tagihan.get(m["id"],0) for m in members)
-                    tot_dt=sum(menanggung.get(m["id"],0) for m in members)
+                    # Ditanggungkan: hanya untuk orang LAIN (menanggung - tagihan sendiri)
+                    tot_dt=sum(max(0, menanggung.get(m["id"],0) - tagihan.get(m["id"],0)) for m in members)
+                    # Kas terkumpul: pembayaran ke kas + porsi diri sendiri yang sudah dicoverm enanggung
                     tot_paid_rk=sum(paid_all_rekap.get(m["id"],0) for m in members)
-                    tot_terbayar=tot_paid_rk
-                    tot_sisa=max(0,tg_gross-tot_terbayar)
-                    pct_paid=tot_terbayar/tg_gross*100 if tg_gross else 100
+                    self_covered=sum(min(menanggung.get(m["id"],0), tagihan.get(m["id"],0)) for m in members)
+                    kas_terkumpul=tot_paid_rk+self_covered
+                    tot_sisa=max(0,tg_gross-kas_terkumpul)
+                    pct_paid=kas_terkumpul/tg_gross*100 if tg_gross else 100
                     lunas=sum(1 for m in members if paid_all_rekap.get(m["id"],0)>=max(0,tagihan.get(m["id"],0)-menanggung.get(m["id"],0)))
                     st.markdown("""
 <div style='background:var(--raised);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:10px;'>
   <div style='display:grid;grid-template-columns:1fr 1fr;gap:10px;'>
     <div><div style='font-size:9px;color:var(--txt3);font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:1.5px;'>Total Tagihan</div>
     <div style='font-size:16px;font-weight:700;color:var(--txt);font-family:IBM Plex Mono,monospace;margin-top:3px;'>{tg}</div></div>
-    <div><div style='font-size:9px;color:var(--txt3);font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:1.5px;'>Ditanggungkan</div>
+    <div><div style='font-size:9px;color:var(--txt3);font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:1.5px;'>Ditanggungkan (orang lain)</div>
     <div style='font-size:16px;font-weight:700;color:var(--orange);font-family:IBM Plex Mono,monospace;margin-top:3px;'>{dt}</div></div>
     <div><div style='font-size:9px;color:var(--txt3);font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:1.5px;'>Kas Terkumpul</div>
     <div style='font-size:16px;font-weight:700;color:var(--green);font-family:IBM Plex Mono,monospace;margin-top:3px;'>{pd}</div></div>
@@ -1865,7 +1870,7 @@ def page_rekap():
   </div>
   <div class='prog' style='margin-top:14px;'><div class='prog-fill prog-g' style='width:{pct:.0f}%'></div></div>
   <div style='font-size:11px;color:var(--txt3);margin-top:6px;'>{lu}/{tot} anggota lunas · {pct:.1f}% terbayar</div>
-</div>""".format(tg=L.fmt_rp(tg_gross),dt=L.fmt_rp(tot_dt),pd=L.fmt_rp(tot_paid_rk),
+</div>""".format(tg=L.fmt_rp(tg_gross),dt=L.fmt_rp(tot_dt),pd=L.fmt_rp(kas_terkumpul),
                      sc="var(--red)" if tot_sisa>0 else "var(--green)",ss=L.fmt_rp(tot_sisa),
                      pct=pct_paid,lu=lunas,tot=len(members)),unsafe_allow_html=True)
                 elif my_mid:
@@ -1937,47 +1942,50 @@ def page_payments():
 
     with tabs[0]:
         tg_gross=sum(tagihan.get(m["id"],0) for m in members)
-        tot_dt=sum(menanggung.get(m["id"],0) for m in members)
+        tot_dt=sum(max(0, menanggung.get(m["id"],0) - tagihan.get(m["id"],0)) for m in members)
         paid_all=L.get_paid_all(trip_id)
         tot_p=sum(paid_all.get(m["id"],0) for m in members)
-        # Kas yang harus masuk = tagihan - yang sudah ditanggung penanggung
-        tot_kas=max(0,tg_gross-tot_dt)
-        # Sisa ke kas = yang belum masuk ke kas (tidak termasuk tanggungan)
-        tot_s=max(0,tot_kas-tot_p)
-        # Kurang bayar = total tagihan - semua yang sudah terbayar (kas + tanggungan)
-        tot_kurang=max(0,tg_gross-tot_p)
-        pct_all=(tot_p+tot_dt)/tg_gross*100 if tg_gross>0 else 100
+        # Kas terkumpul: bayar ke kas + porsi diri sendiri yang sudah di-cover penanggung
+        self_covered_total=sum(min(menanggung.get(m["id"],0), tagihan.get(m["id"],0)) for m in members)
+        kas_terkumpul_total=tot_p+self_covered_total
+        tot_s=max(0, tg_gross-kas_terkumpul_total)
+        pct_all=kas_terkumpul_total/tg_gross*100 if tg_gross>0 else 100
         lunas=sum(1 for m in members if paid_all.get(m["id"],0)>=max(0,tagihan.get(m["id"],0)-menanggung.get(m["id"],0)))
         c1,c2,c3,c4,c5=st.columns(5)
         c1.metric("Total Tagihan",L.fmt_rp(tg_gross))
-        c2.metric("Ditanggungkan",L.fmt_rp(tot_dt),help="Dibayarkan oleh penanggung, termasuk terbayar")
-        c3.metric("Terbayar ke Kas",L.fmt_rp(tot_p))
-        c4.metric("Kurang Dibayar","-{}".format(L.fmt_rp(tot_kurang)),
-                  delta="Lunas ✅" if tot_kurang==0 else "-{}".format(L.fmt_rp(tot_kurang)),
-                  delta_color="normal" if tot_kurang==0 else "inverse")
-        c5.metric("Sisa ke Kas",L.fmt_rp(tot_s),delta="{}/{} lunas".format(lunas,len(members)))
+        c2.metric("Ditanggungkan (orang lain)",L.fmt_rp(tot_dt),help="Uang yang dikeluarkan penanggung untuk orang lain selain dirinya")
+        c3.metric("Kas Terkumpul",L.fmt_rp(kas_terkumpul_total),help="Pembayaran ke kas + bagian sendiri yang sudah di-cover penanggung")
+        c4.metric("Sisa Kurang Bayar",L.fmt_rp(tot_s),
+                  delta="Lunas ✅" if tot_s==0 else None,
+                  delta_color="normal")
+        c5.metric("","{}/{} lunas".format(lunas,len(members)))
         pb(pct_all,"green" if pct_all>=100 else "orange")
         msep()
         for m in members:
             mid=m["id"]; tag=tagihan.get(mid,0); mng=menanggung.get(mid,0)
             net=net_tagihan.get(mid,tag-mng); paid=paid_all.get(mid,0)
+            # Terbayar = kas yang dibayar + bagian sendiri yang sudah di-cover menanggung
+            self_covered_m=min(mng, tag)
+            terbayar_m=paid+self_covered_m
+            # Sisa tanggungan untuk orang lain = menanggung total - tagihan sendiri
+            sisa_tanggungan_m=max(0, mng-tag)
             if net>0:
                 sisa=net-paid; pct=min(100,int(paid/net*100)) if net>0 else 100
                 sc="#22c55e" if sisa<=0 else "#f59e0b" if paid>0 else "#ef4444"
                 st2="✅ Lunas" if sisa<=0 else "Sisa {}".format(L.fmt_rp(sisa))
-            else: pct=100; sc="#06b6d4"; st2="💚 Piutang {}".format(L.fmt_rp(abs(net)+paid))
-            mng_str=" · Menanggung: <b style='color:var(--orange);'>{}</b>".format(L.fmt_rp(mng)) if mng>0 else ""
+            else: pct=100; sc="#06b6d4"; st2="💚 Piutang {}".format(L.fmt_rp(sisa_tanggungan_m))
+            mng_str=" · Menanggung (orang lain): <b style='color:var(--orange);'>{}</b>".format(L.fmt_rp(max(0,mng-tag))) if mng>0 else ""
             st.markdown("""
 <div class='card'>
   <div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;'>
     <div>
       <div style='font-size:13px;font-weight:700;color:var(--txt);'>👤 {nm}</div>
-      <div style='font-size:11px;color:var(--txt3);font-family:IBM Plex Mono,monospace;margin-top:3px;'>Tagihan: {tag}{mng} · Bayar: <b style='color:var(--accent2);'>{paid}</b></div>
+      <div style='font-size:11px;color:var(--txt3);font-family:IBM Plex Mono,monospace;margin-top:3px;'>Tagihan: {tag}{mng} · Terbayar: <b style='color:var(--accent2);'>{paid}</b></div>
     </div>
     <div style='font-size:13px;font-weight:700;color:{sc};'>{st2}</div>
   </div>
   <div class='prog' style='margin-top:8px;'><div class='prog-fill' style='width:{pct}%;background:{sc};'></div></div>
-</div>""".format(nm=m["nama_lengkap"],tag=L.fmt_rp(tag),mng=mng_str,paid=L.fmt_rp(paid),sc=sc,st2=st2,pct=pct),unsafe_allow_html=True)
+</div>""".format(nm=m["nama_lengkap"],tag=L.fmt_rp(tag),mng=mng_str,paid=L.fmt_rp(terbayar_m),sc=sc,st2=st2,pct=pct),unsafe_allow_html=True)
 
     with tabs[1]:
         if not admin: alert("Pencatatan pembayaran hanya admin.","warning")
@@ -2202,7 +2210,13 @@ def page_cl_personal():
     if not members: alert("Tambahkan anggota dahulu.","warning"); _pw_end(); return
 
     # Admin bisa pilih siapa saja; member hanya bisa lihat semua tapi aksi dirinya saja
-    sel_mn=st.selectbox("Pilih Anggota",[m["nama_lengkap"] for m in members],key="clp_sel")
+    # Default: cari anggota yang emailnya sama dengan user login
+    member_names = [m["nama_lengkap"] for m in members]
+    _default_clp = 0
+    for _i, _m in enumerate(members):
+        if (_m.get("email") or "").lower() == email.lower():
+            _default_clp = _i; break
+    sel_mn=st.selectbox("Pilih Anggota", member_names, index=_default_clp, key="clp_sel")
     sel_m=next(m for m in members if m["nama_lengkap"]==sel_mn); mid=sel_m["id"]
     # Cek apakah yang dipilih adalah diri sendiri
     is_own = admin or (sel_m.get("email") or "").lower()==email.lower()
@@ -2447,7 +2461,7 @@ def page_berat():
             k_berat=sum(i["berat_per_orang_item"] for i in k_items_m)
             ac="#22c55e" if pct_max<=60 else "#f59e0b" if pct_max<=85 else "#ef4444"
             warn=" ⚠️" if pct_max>85 else ""
-            with st.expander("{}{}  —  {}  ({:.0f}% dari terberat)".format(m["nama_lengkap"],warn,L.fmt_berat(bg),pct_max),expanded=(idx_b==0)):
+            with st.expander("{}{}  —  {}  ({:.1f}% dari total)".format(m["nama_lengkap"],warn,L.fmt_berat(bg),pct_tot),expanded=(idx_b==0)):
                 cl,cr=st.columns([3,1])
                 with cl:
                     st.markdown("<div style='font-size:11px;color:var(--txt3);margin-bottom:6px;'>🧳 Personal <b style='color:var(--txt2);'>{}</b> + 🏕️ Kelompok <b style='color:var(--txt2);'>{}</b></div>".format(L.fmt_berat(p_berat),L.fmt_berat(k_berat)),unsafe_allow_html=True)
@@ -2873,7 +2887,6 @@ def page_notes():
 # ═══════════════════════════════════════════════════════════════════════════════
 def page_exercises():
     _pw()
-    import os
     ph("💪","Latihan Fisik","Program latihan persiapan pendakian")
     admin=is_admin_user()
     ex_cats=L.get_exercise_categories() if hasattr(L,"get_exercise_categories") else []
@@ -2898,6 +2911,7 @@ def page_exercises():
                     ekal=st.number_input("Kalori Estimasi",min_value=0,value=0)
                     eotot=st.text_input("Otot Utama",placeholder="Quadriceps, Glutes...")
                     ealat=st.text_input("Peralatan",value="Tanpa Alat")
+                eimg=st.text_input("🖼️ URL Gambar (opsional)",placeholder="https://images.unsplash.com/...",help="Masukkan URL gambar dari Google, Unsplash, atau sumber lainnya")
                 eins=st.text_area("Instruksi (satu langkah per baris)",height=100,placeholder="Berdiri tegak\nTekuk lutut 90°\n...")
                 etip=st.text_area("Tips",height=60,placeholder="Tips keamanan dan teknik...")
                 st.markdown('<div class="btn-ok">',unsafe_allow_html=True)
@@ -2907,7 +2921,8 @@ def page_exercises():
                     else:
                         L.create_exercise(dict(nama_latihan=enm,category_id=ex_cat_opts2.get(ecat),
                             fokus=efok,level=elvl,durasi_menit=edur,kalori_estimasi=ekal,
-                            otot_utama=eotot,peralatan=ealat,instruksi=eins,tips=etip))
+                            otot_utama=eotot,peralatan=ealat,instruksi=eins,tips=etip,
+                            gambar_url=eimg or None))
                         st.success("✅ **{}** ditambahkan!".format(enm)); st.rerun()
                 st.markdown('</div>',unsafe_allow_html=True)
         st.markdown("<div style='height:8px'></div>",unsafe_allow_html=True)
@@ -2943,14 +2958,8 @@ def page_exercises():
             otot=ex.get("otot_utama","") or ""
             alat=ex.get("peralatan","Tanpa Alat") or "Tanpa Alat"
             img_url=ex.get("gambar_url") or ex.get("image_url") or ""
-            open_key="ex_open_{}".format(ex["id"])
-            is_open=st.session_state.get(open_key,False)
 
-            # ── Full card in pure HTML ──────────────────────────────────────
-            img_html=""
-            if img_url:
-                img_html="<div style='width:100%;height:180px;overflow:hidden;border-radius:10px 10px 0 0;background:#0b0f14;margin-bottom:0;'><img src='{}' style='width:100%;height:100%;object-fit:cover;opacity:.88;display:block;'></div>".format(img_url)
-
+            # Build stats chips
             stats_chips=(
                 "<span style='background:#1c2638;border:1px solid #2e3f58;border-radius:20px;"
                 "padding:5px 12px;font-size:12px;color:#8aa0c0;font-weight:600;'>⏱️ {} mnt</span>"
@@ -2967,47 +2976,71 @@ def page_exercises():
             if otot:
                 otot_row="<div style='margin-top:10px;font-size:11px;color:#4a6080;'><span style='color:#3b82f650;'>▸</span> 💪 Otot: <span style='color:#6b8ab0;'>{}</span></div>".format(otot)
 
-            card_html=(
-                "<div style='background:#161e2a;border:1px solid #243044;border-left:4px solid {lvl_c};"
-                "border-radius:14px;margin-bottom:16px;overflow:hidden;'>"
-                "{img}"
-                "<div style='padding:16px 20px 14px;'>"
-                "<div style='display:flex;align-items:flex-start;justify-content:space-between;gap:10px;'>"
-                "<div style='flex:1;'>"
-                "<div style='display:flex;align-items:center;gap:10px;margin-bottom:8px;'>"
-                "<span style='background:{lvl_bg};color:{lvl_c};border:1px solid {lvl_c}50;"
-                "padding:4px 14px;border-radius:20px;font-size:11px;font-weight:800;"
-                "font-family:IBM Plex Mono,monospace;letter-spacing:.5px;flex-shrink:0;'>{lvl}</span>"
-                "<span style='font-size:17px;font-weight:800;color:#e2eaf5;line-height:1.3;'>{nm}</span>"
-                "</div>"
-                "<div style='display:flex;gap:8px;flex-wrap:wrap;'>{chips}</div>"
-                "{otot}"
-                "</div>"
-                "</div>"
-                "</div></div>"
-            ).format(lvl_c=lvl_c,lvl_bg=lvl_bg,lvl=ex["level"],nm=ex["nama_latihan"],
-                     img=img_html,chips=stats_chips,otot=otot_row)
-            st.markdown(card_html,unsafe_allow_html=True)
+            # Build expander label
+            exp_label="{} {}  ·  {} mnt  ·  {} kal".format(
+                ex["level"], ex["nama_latihan"],
+                ex["durasi_menit"], ex["kalori_estimasi"])
 
-            # Action button OUTSIDE html using st.button
-            btn_lbl=("✏️ Edit" if admin else "👁️ Detail")+" — "+ex["nama_latihan"]
-            btn_icon="✏️ Edit" if admin else "👁️ Detail"
-            col_l,col_r=st.columns([9,1])
-            with col_r:
-                st.markdown("<div style='margin-top:-58px;'>",unsafe_allow_html=True)
-                if st.button(btn_icon,key="ex_btn_{}".format(ex["id"]),use_container_width=True,
-                             help="Edit" if admin else "Lihat detail"):
-                    st.session_state[open_key]=not is_open; st.rerun()
-                st.markdown("</div>",unsafe_allow_html=True)
-            st.markdown("<div style='height:2px'></div>",unsafe_allow_html=True)
+            with st.expander(exp_label, expanded=False):
+                # Image at top if available
+                if img_url:
+                    st.markdown(
+                        "<div style='width:100%;max-height:220px;overflow:hidden;border-radius:10px;"
+                        "background:#0b0f14;margin-bottom:14px;'>"
+                        "<img src='{}' style='width:100%;height:220px;object-fit:cover;opacity:.88;display:block;border-radius:10px;'>"
+                        "</div>".format(img_url), unsafe_allow_html=True)
 
-            # ── Inline detail / edit panel ───────────────────────────────────
-            if is_open:
+                # Header card inside expander
                 st.markdown(
-                    "<div style='background:#111720;border:1px solid #3b82f640;"
-                    "border-left:4px solid #3b82f6;border-radius:12px;padding:20px;margin:-6px 0 16px;'>",
+                    "<div style='background:#161e2a;border:1px solid #243044;border-left:4px solid {lvl_c};"
+                    "border-radius:12px;padding:14px 18px;margin-bottom:14px;'>"
+                    "<div style='display:flex;align-items:center;gap:10px;margin-bottom:10px;'>"
+                    "<span style='background:{lvl_bg};color:{lvl_c};border:1px solid {lvl_c}50;"
+                    "padding:4px 14px;border-radius:20px;font-size:11px;font-weight:800;"
+                    "font-family:IBM Plex Mono,monospace;letter-spacing:.5px;'>{lvl}</span>"
+                    "<span style='font-size:17px;font-weight:800;color:#e2eaf5;'>{nm}</span>"
+                    "</div>"
+                    "<div style='display:flex;gap:8px;flex-wrap:wrap;'>{chips}</div>"
+                    "{otot}"
+                    "</div>".format(lvl_c=lvl_c,lvl_bg=lvl_bg,lvl=ex["level"],
+                                   nm=ex["nama_latihan"],chips=stats_chips,otot=otot_row),
                     unsafe_allow_html=True)
+
+                # Steps / instruksi
+                if ex.get("instruksi"):
+                    steps=[s.strip() for s in ex["instruksi"].split("\n") if s.strip()]
+                    st.markdown(
+                        "<div style='font-size:12px;font-weight:700;color:#4a6080;"
+                        "text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;'>"
+                        "📋 CARA MELAKUKAN</div>", unsafe_allow_html=True)
+                    step_html="".join(
+                        "<div style='display:flex;gap:14px;padding:10px 0;"
+                        "border-bottom:1px solid #1c2638;align-items:flex-start;'>"
+                        "<span style='background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;"
+                        "border-radius:50%;width:26px;height:26px;min-width:26px;"
+                        "display:flex;align-items:center;justify-content:center;"
+                        "font-size:11px;font-weight:800;margin-top:1px;flex-shrink:0;'>{n}</span>"
+                        "<span style='font-size:13px;color:#e2eaf5;line-height:1.65;'>{s}</span>"
+                        "</div>".format(n=i,s=step)
+                        for i,step in enumerate(steps,1))
+                    st.markdown(step_html, unsafe_allow_html=True)
+
+                # Tips
+                if ex.get("tips"):
+                    st.markdown(
+                        "<div style='background:rgba(245,158,11,.08);border-left:3px solid #f59e0b;"
+                        "border-radius:8px;padding:14px 18px;font-size:13px;color:#fcd34d;"
+                        "margin-top:14px;line-height:1.7;'>"
+                        "💡 <b>Tips:</b> {}</div>".format(ex["tips"]), unsafe_allow_html=True)
+
+                # Admin edit form inside expander
                 if admin:
+                    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+                    st.markdown(
+                        "<div style='border-top:1px solid #243044;padding-top:14px;margin-top:4px;'>"
+                        "<div style='font-size:11px;color:#4a6080;margin-bottom:10px;font-weight:700;"
+                        "text-transform:uppercase;letter-spacing:1px;'>✏️ Edit Latihan</div></div>",
+                        unsafe_allow_html=True)
                     ex_cat_opts3={"{} {}".format(ec["icon"],ec["nama"]):ec["id"] for ec in ex_cats}
                     with st.form("ex_edit_{}".format(ex["id"])):
                         r1,r2=st.columns(2)
@@ -3015,13 +3048,13 @@ def page_exercises():
                             enm2=st.text_input("Nama",value=ex["nama_latihan"])
                             cur_c=next((k for k,v in ex_cat_opts3.items() if v==ex["category_id"]),list(ex_cat_opts3.keys())[0] if ex_cat_opts3 else "")
                             ecat2=st.selectbox("Kategori",list(ex_cat_opts3.keys()),index=list(ex_cat_opts3.keys()).index(cur_c) if cur_c in ex_cat_opts3 else 0)
-                            efok2=st.text_input("Fokus",value=ex.get("fokus",""))
+                            efok2=st.text_input("Fokus",value=ex.get("fokus","") or "")
                             elvl2=st.selectbox("Level",LEVELS,index=LEVELS.index(ex["level"]))
                         with r2:
                             edur2=st.number_input("Durasi (mnt)",min_value=1,value=ex["durasi_menit"])
                             ekal2=st.number_input("Kalori",min_value=0,value=ex["kalori_estimasi"])
-                            eotot2=st.text_input("Otot Utama",value=ex.get("otot_utama",""))
-                            ealat2=st.text_input("Peralatan",value=ex.get("peralatan","Tanpa Alat"))
+                            eotot2=st.text_input("Otot Utama",value=ex.get("otot_utama","") or "")
+                            ealat2=st.text_input("Peralatan",value=ex.get("peralatan","Tanpa Alat") or "Tanpa Alat")
                         eimg2=st.text_input("🖼️ URL Gambar (opsional)",value=ex.get("gambar_url") or ex.get("image_url") or "",placeholder="https://images.example.com/foto.jpg")
                         eins2=st.text_area("📋 Instruksi (satu langkah per baris)",value=ex.get("instruksi","") or "",height=110)
                         etip2=st.text_area("💡 Tips",value=ex.get("tips","") or "",height=68)
@@ -3034,35 +3067,16 @@ def page_exercises():
                                     fokus=efok2,level=elvl2,durasi_menit=edur2,kalori_estimasi=ekal2,
                                     otot_utama=eotot2,peralatan=ealat2,instruksi=eins2,tips=etip2,
                                     gambar_url=eimg2 or None))
-                                st.session_state.pop(open_key,None); st.success("✅ Diperbarui!"); st.rerun()
+                                st.success("✅ Diperbarui!"); st.rerun()
                             st.markdown('</div>',unsafe_allow_html=True)
                         with bb2:
                             st.markdown('<div class="btn-danger">',unsafe_allow_html=True)
                             if st.form_submit_button("🗑️ Hapus",use_container_width=True):
-                                L.delete_exercise(ex["id"]); st.session_state.pop(open_key,None); st.rerun()
+                                L.delete_exercise(ex["id"]); st.rerun()
                             st.markdown('</div>',unsafe_allow_html=True)
-                else:
-                    # Read-only detail
-                    if ex.get("instruksi"):
-                        st.markdown("<div style='font-size:12px;font-weight:700;color:#4a6080;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;'>📋 Cara Melakukan</div>",unsafe_allow_html=True)
-                        steps=[s.strip() for s in ex["instruksi"].split("\n") if s.strip()]
-                        step_html="".join(
-                            "<div style='display:flex;gap:14px;padding:10px 0;border-bottom:1px solid #1c2638;align-items:flex-start;'>"
-                            "<span style='background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;border-radius:50%;width:26px;height:26px;min-width:26px;"
-                            "display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-top:1px;flex-shrink:0;'>{n}</span>"
-                            "<span style='font-size:13px;color:#e2eaf5;line-height:1.65;'>{s}</span>"
-                            "</div>".format(n=i,s=step)
-                            for i,step in enumerate(steps,1))
-                        st.markdown(step_html,unsafe_allow_html=True)
-                    if ex.get("tips"):
-                        st.markdown(
-                            "<div style='background:rgba(245,158,11,.08);border-left:3px solid #f59e0b;"
-                            "border-radius:8px;padding:14px 18px;font-size:13px;color:#fcd34d;margin-top:16px;line-height:1.7;'>"
-                            "💡 <b>Tips:</b> {}</div>".format(ex["tips"]),unsafe_allow_html=True)
-                st.markdown("</div>",unsafe_allow_html=True)
-
 
     _pw_end()
+
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -3246,7 +3260,7 @@ def page_cl_master():
     st.markdown("""
 <div style='background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-left:3px solid #3b82f6;
 border-radius:10px;padding:12px 16px;font-size:13px;color:#93c5fd;margin-bottom:16px;'>
-💡 <b>Cara pakai:</b> Centang item yang ingin ditambahkan, atur jumlah, pilih target anggota, lalu klik <b>Assign</b>. Semua pilihan dikumpulkan dulu — tidak ada loading per centang.
+💡 <b>Cara pakai:</b> Centang item yang ingin ditambahkan, atur jumlah, pilih target anggota (bisa lebih dari satu), lalu klik <b>Assign</b>. Semua pilihan dikumpulkan dulu — tidak ada loading per centang.
 </div>""", unsafe_allow_html=True)
 
     fc1,fc2,fc3,fc4=st.columns(4)
@@ -3255,9 +3269,14 @@ border-radius:10px;padding:12px 16px;font-size:13px;color:#93c5fd;margin-bottom:
     fq=fc3.text_input("🔍 Cari","",key="clm_fq")
     fgrp=fc4.selectbox("Kelompokkan",["Default","Kategori","Tujuan","Label"],key="clm_grp")
 
-    assign_target=st.selectbox("📋 Assign ke",list(member_opts.keys()),key="clm_target",
-        help="Semua Anggota = tambah ke checklist kelompok. Pilih nama = tambah ke checklist personal orang itu.")
-    assign_mid=member_opts[assign_target]
+    assign_targets=st.multiselect(
+        "📋 Assign ke (pilih satu atau lebih)",
+        list(member_opts.keys()),
+        default=["🏕️ Semua Anggota (Checklist Kelompok)"],
+        key="clm_target",
+        help="Semua Anggota = tambah ke checklist kelompok. Pilih nama anggota = tambah ke checklist personal mereka.")
+    if not assign_targets:
+        assign_targets=["🏕️ Semua Anggota (Checklist Kelompok)"]
 
     catf=cat_opts.get(fcat) if fcat!="Semua" else None
     tjf=ftj if ftj!="Semua" else None
@@ -3305,7 +3324,7 @@ border-radius:10px;padding:12px 16px;font-size:13px;color:#93c5fd;margin-bottom:
 
         st.markdown('<div style="height:8px"></div>',unsafe_allow_html=True)
         submitted=st.form_submit_button(
-            "📋 Assign Item Terpilih ke {} ".format(assign_target),
+            "📋 Assign Item Terpilih ke {} target".format(len(assign_targets)),
             use_container_width=True)
 
     if submitted:
@@ -3313,11 +3332,15 @@ border-radius:10px;padding:12px 16px;font-size:13px;color:#93c5fd;margin-bottom:
         if not qty_map:
             st.warning("⚠️ Tidak ada item yang dicentang.")
         else:
-            if assign_mid is None:
-                added=L.sync_master_to_checklist_with_qty(trip_id,qty_map)
-            else:
-                added=L.sync_master_to_personal_checklist(trip_id,assign_mid,qty_map)
-            st.success("✅ {} item berhasil ditambahkan ke {}!".format(added,assign_target))
+            total_added=0
+            for tgt in assign_targets:
+                assign_mid=member_opts[tgt]
+                if assign_mid is None:
+                    total_added+=L.sync_master_to_checklist_with_qty(trip_id,qty_map)
+                else:
+                    total_added+=L.sync_master_to_personal_checklist(trip_id,assign_mid,qty_map)
+            tgt_names=", ".join(assign_targets)
+            st.success("✅ {} item berhasil ditambahkan ke: {}!".format(total_added,tgt_names))
             st.rerun()
 
 def page_settings():

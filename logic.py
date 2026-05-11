@@ -10,7 +10,7 @@ Perubahan:
 - Exercise CRUD
 - Berat: konversi satuan (gram, kg, liter, ml, oz, lb)
 """
-from database import get_connection, release_connection, ADMIN_EMAIL
+from database import get_connection, release_connection, ADMIN_EMAIL, ADMIN_EMAILS
 import psycopg2.extras
 from datetime import date, timedelta
 
@@ -108,7 +108,10 @@ def create_user_if_not_exist(email):
 
 
 def is_admin(email):
-    return email and email.strip().lower() == ADMIN_EMAIL.lower()
+    if not email:
+        return False
+    em = email.strip().lower()
+    return any(em == a.lower() for a in ADMIN_EMAILS)
 
 
 # ─── MEMBERS MASTER ───────────────────────────────────────────────────────────
