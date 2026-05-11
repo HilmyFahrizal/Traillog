@@ -464,88 +464,72 @@ def page_login():
     st.markdown("""<style>
 section[data-testid="stSidebar"]{display:none!important;}
 .main .block-container{
-  max-width:100%!important;
-  padding:0!important;
-  margin:0!important;
+  max-width:440px!important;
+  padding:60px 24px 40px!important;
+  margin:0 auto!important;
 }
-.login-wrap{
-  min-height:100vh;
-  display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(ellipse at 50% 0%,rgba(59,130,246,.12) 0%,transparent 65%),#0b0f14;
+/* Card background */
+.stApp::before{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at 50% -10%,rgba(59,130,246,.15) 0%,transparent 60%),#0b0f14;
+  z-index:-1;
 }
-.login-card{
-  width:100%;max-width:400px;
-  background:#111720;
-  border:1px solid #243044;
-  border-radius:20px;
-  padding:40px 36px 36px;
-  box-shadow:0 24px 80px rgba(0,0,0,.7);
-  margin:40px 16px;
-}
-.login-logo{
-  width:72px;height:72px;margin:0 auto 18px;
-  background:linear-gradient(135deg,#1d4ed8,#3b82f6);
-  border-radius:20px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:36px;
-  box-shadow:0 8px 32px rgba(59,130,246,.45);
-}
-.login-title{
-  font-size:30px;font-weight:800;color:#e2eaf5;
-  letter-spacing:-.04em;
-  font-family:'Plus Jakarta Sans',sans-serif;
-  text-align:center;margin-bottom:4px;
-}
-.login-sub{
-  font-size:13px;color:#4a6080;text-align:center;margin-bottom:28px;
-}
-.login-label{
-  font-size:13px;font-weight:600;color:#8aa0c0;margin-bottom:6px;
-}
-.login-divider{
-  display:flex;align-items:center;gap:10px;margin:18px 0;
-}
-.login-divider span{font-size:11px;color:#2e3f58;white-space:nowrap;}
-.login-divider hr{flex:1;border:none;border-top:1px solid #243044;}
-/* Override streamlit input inside login */
-.login-card .stTextInput input{
-  background:#161e2a!important;
+/* Input styling */
+div[data-testid="stTextInput"] input{
+  background:#111720!important;
   border:1px solid #2e3f58!important;
-  border-radius:10px!important;
+  border-radius:12px!important;
   color:#e2eaf5!important;
   font-size:14px!important;
-  padding:12px 14px!important;
+  padding:14px 16px!important;
+  height:auto!important;
 }
-.login-card .stTextInput input:focus{
+div[data-testid="stTextInput"] input:focus{
   border-color:#3b82f6!important;
-  box-shadow:0 0 0 3px rgba(59,130,246,.15)!important;
+  box-shadow:0 0 0 3px rgba(59,130,246,.18)!important;
 }
-.login-card .stButton>button{
+div[data-testid="stTextInput"] label{display:none!important;}
+/* Button styling */
+div[data-testid="stButton"]>button{
   background:linear-gradient(135deg,#1d4ed8,#3b82f6)!important;
-  color:#fff!important;
-  border:none!important;
-  border-radius:10px!important;
+  color:#fff!important;border:none!important;
+  border-radius:12px!important;
   font-size:14px!important;font-weight:700!important;
-  padding:12px!important;
-  box-shadow:0 4px 20px rgba(59,130,246,.35)!important;
+  padding:14px!important;height:auto!important;
+  box-shadow:0 4px 24px rgba(59,130,246,.4)!important;
   transition:all .2s!important;
+  letter-spacing:.01em!important;
 }
-.login-card .stButton>button:hover{
-  box-shadow:0 6px 28px rgba(59,130,246,.55)!important;
+div[data-testid="stButton"]>button:hover{
+  box-shadow:0 8px 32px rgba(59,130,246,.6)!important;
   transform:translateY(-1px)!important;
 }
-</style>
-<div class="login-wrap">
-  <div class="login-card">
-    <div class="login-logo">⛰️</div>
-    <div class="login-title">TrailLog</div>
-    <div class="login-sub">Platform manajemen pendakian kelompok</div>
-    <div class="login-divider"><hr><span>Masuk dengan email</span><hr></div>
-    <div class="login-label">Alamat Email</div>
-""", unsafe_allow_html=True)
-    email_in = st.text_input("Email", placeholder="email@email.com",
+</style>""", unsafe_allow_html=True)
+
+    # Logo + judul
+    st.markdown("""
+<div style="text-align:center;padding:20px 0 32px;">
+  <div style="width:76px;height:76px;margin:0 auto 20px;
+    background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:22px;
+    display:flex;align-items:center;justify-content:center;font-size:38px;
+    box-shadow:0 10px 40px rgba(59,130,246,.5);">⛰️</div>
+  <div style="font-size:34px;font-weight:800;color:#e2eaf5;letter-spacing:-.04em;
+    font-family:'Plus Jakarta Sans',sans-serif;line-height:1.1;">TrailLog</div>
+  <div style="font-size:13px;color:#4a6080;margin-top:8px;letter-spacing:.01em;">
+    Platform manajemen pendakian kelompok</div>
+</div>
+<div style="background:#111720;border:1px solid #243044;border-radius:20px;
+  padding:32px 28px 28px;box-shadow:0 20px 60px rgba(0,0,0,.6);margin-bottom:8px;">
+  <div style="font-size:13px;font-weight:600;color:#8aa0c0;margin-bottom:10px;
+    display:flex;align-items:center;gap:8px;">
+    <span>✉️</span> Alamat Email
+  </div>""", unsafe_allow_html=True)
+
+    email_in = st.text_input("Email", placeholder="namakamu@email.com",
         label_visibility="collapsed", key="login_email_input")
-    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+
     if st.button("Masuk ke TrailLog →", use_container_width=True, key="login_btn"):
         email = email_in.strip().lower()
         if not email or "@" not in email:
@@ -562,14 +546,16 @@ section[data-testid="stSidebar"]{display:none!important;}
                     user=L.get_user_by_email(email)
                 else:
                     st.error("❌ Email tidak dikenali. Hubungi admin trip kamu.")
-                    st.markdown("</div></div>", unsafe_allow_html=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
                     return
             st.session_state["logged_in_email"]=email
             st.session_state["logged_in_role"]=user["role"]
             st.session_state["page"]="dashboard"; st.rerun()
-    st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
-    st.markdown("<div style='font-size:11px;color:#2e3f58;text-align:center;'>Belum terdaftar? Hubungi admin tripmu.</div>", unsafe_allow_html=True)
-    st.markdown("</div></div>", unsafe_allow_html=True)
+
+    st.markdown("""</div>
+<div style="text-align:center;margin-top:16px;font-size:11px;color:#2e3f58;">
+  Belum terdaftar? Hubungi admin tripmu.
+</div>""", unsafe_allow_html=True)
 
 # ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 def render_sidebar():
