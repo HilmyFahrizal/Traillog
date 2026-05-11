@@ -1847,7 +1847,7 @@ def page_rekap():
                     tg_gross=sum(tagihan.get(m["id"],0) for m in members)
                     tot_dt=sum(menanggung.get(m["id"],0) for m in members)
                     tot_paid_rk=sum(paid_all_rekap.get(m["id"],0) for m in members)
-                    tot_terbayar=tot_paid_rk+tot_dt
+                    tot_terbayar=tot_paid_rk
                     tot_sisa=max(0,tg_gross-tot_terbayar)
                     pct_paid=tot_terbayar/tg_gross*100 if tg_gross else 100
                     lunas=sum(1 for m in members if paid_all_rekap.get(m["id"],0)>=max(0,tagihan.get(m["id"],0)-menanggung.get(m["id"],0)))
