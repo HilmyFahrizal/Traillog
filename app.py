@@ -2009,8 +2009,8 @@ def page_payments():
                 if st.form_submit_button("✅ Catat Pembayaran",use_container_width=True):
                     if pjml<=0: st.error("Jumlah harus > 0!")
                     else:
-                        L.add_payment(trip_id,dict(member_id=mid_p,jumlah=pjml,
-                            tanggal=ptgl,metode=pmt,catatan=pnote or None))
+                        L.add_payment(trip_id,dict(member_id=mid_p,jumlah_dibayar=pjml,
+                            tanggal_bayar=ptgl,metode_bayar=pmt,keterangan=pnote or None))
                         st.success("✅ Pembayaran {} oleh {} dicatat!".format(L.fmt_rp(pjml),sm))
                         st.rerun()
 
@@ -2959,7 +2959,7 @@ def page_exercises():
             alat=ex.get("peralatan","Tanpa Alat") or "Tanpa Alat"
             img_url=ex.get("gambar_url") or ex.get("image_url") or ""
 
-            # Build stats chips
+            # Build stats chips (inside expanded)
             stats_chips=(
                 "<span style='background:#1c2638;border:1px solid #2e3f58;border-radius:20px;"
                 "padding:5px 12px;font-size:12px;color:#8aa0c0;font-weight:600;'>⏱️ {} mnt</span>"
@@ -2976,10 +2976,31 @@ def page_exercises():
             if otot:
                 otot_row="<div style='margin-top:10px;font-size:11px;color:#4a6080;'><span style='color:#3b82f650;'>▸</span> 💪 Otot: <span style='color:#6b8ab0;'>{}</span></div>".format(otot)
 
-            # Build expander label
-            exp_label="{} {}  ·  {} mnt  ·  {} kal".format(
-                ex["level"], ex["nama_latihan"],
-                ex["durasi_menit"], ex["kalori_estimasi"])
+            # Preview bar (visible before dropdown opened)
+            fokus_chip=""
+            if ex.get("fokus"):
+                fokus_chip="<span style='background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);border-radius:20px;padding:2px 10px;font-size:11px;color:#3b82f6;font-weight:600;'>🎯 {}</span>".format(ex["fokus"])
+            alat_chip=""
+            if alat!="Tanpa Alat":
+                alat_chip="<span style='background:#1c2638;border:1px solid #2e3f58;border-radius:20px;padding:2px 10px;font-size:11px;color:#4a6080;'>🔧 {}</span>".format(alat)
+            st.markdown("""<div style='display:flex;align-items:center;gap:8px;
+                padding:0 16px 6px;margin-top:-8px;flex-wrap:wrap;'>
+                <span style='background:{bg};border:1px solid {col}44;border-radius:20px;
+                  padding:2px 10px;font-size:11px;font-weight:700;color:{col};'>{lvl}</span>
+                <span style='background:rgba(100,116,139,.08);border:1px solid #2e3f58;border-radius:20px;
+                  padding:2px 10px;font-size:11px;color:#64748b;'>⏱ {dur} mnt</span>
+                <span style='background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:20px;
+                  padding:2px 10px;font-size:11px;color:#f87171;'>🔥 {kal} kal</span>
+                {fokus}{alat}
+                </div>""".format(
+                bg=lvl_bg,col=lvl_c,lvl=ex["level"],
+                dur=ex["durasi_menit"],kal=ex["kalori_estimasi"],
+                fokus=fokus_chip,alat=alat_chip),
+                unsafe_allow_html=True)
+
+            # Expander label (plain text, Streamlit requirement)
+            exp_label="  {} · {} mnt · {} kal".format(
+                ex["nama_latihan"], ex["durasi_menit"], ex["kalori_estimasi"])
 
             with st.expander(exp_label, expanded=False):
                 # Image at top if available
