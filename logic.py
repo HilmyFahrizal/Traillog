@@ -832,11 +832,21 @@ def set_dibawa_oleh(clid, member_id):
 
 # ─── CHECKLIST PERSONAL ───────────────────────────────────────────────────────
 def get_checklist_personal(trip_id, member_id, sort_by="urutan", f_label=None, f_sumber=None, search=""):
+    """
+    Ambil checklist personal, TIDAK termasuk item yang berasal dari master dengan tujuan='Kelompok'.
+    Item kelompok seharusnya hanya muncul di checklist kelompok.
+    """
     sql = """
         SELECT cp.*, c.nama_kategori, c.icon
         FROM trip_checklist_personal cp
         LEFT JOIN categories c ON cp.category_id=c.id
         WHERE cp.trip_id=%s AND cp.member_id=%s
+          AND (
+            cp.item_id IS NULL
+            OR cp.item_id NOT IN (
+                SELECT id FROM items WHERE tujuan='Kelompok'
+            )
+          )
     """
     p = [trip_id, member_id]
     if f_label:  sql += " AND cp.label=%s";       p.append(f_label)
@@ -845,6 +855,25 @@ def get_checklist_personal(trip_id, member_id, sort_by="urutan", f_label=None, f
     order_map = {"nama": "cp.sumber, cp.nama_item", "sumber": "cp.sumber, cp.nama_item", "label": "cp.label, cp.nama_item"}
     sql += " ORDER BY " + order_map.get(sort_by, "cp.sumber, cp.label, cp.urutan, cp.nama_item")
     return q(sql, p)
+
+
+def cleanup_kelompok_from_personal(trip_id):
+    """
+    Hapus dari trip_checklist_personal semua item yang tujuannya 'Kelompok' di master.
+    Dipanggil saat admin membuka halaman packing personal untuk membersihkan data lama.
+    Returns jumlah baris yang dihapus.
+    """
+    rows = q("""
+        SELECT cp.id FROM trip_checklist_personal cp
+        JOIN items i ON cp.item_id = i.id
+        WHERE cp.trip_id=%s AND i.tujuan='Kelompok'
+    """, (trip_id,))
+    if not rows:
+        return 0
+    ids = [r["id"] for r in rows]
+    placeholders = ",".join(["%s"] * len(ids))
+    run("DELETE FROM trip_checklist_personal WHERE id IN ({})".format(placeholders), ids)
+    return len(ids)
 
 
 def add_checklist_personal_manual(trip_id, member_id, d):

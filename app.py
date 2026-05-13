@@ -2147,35 +2147,36 @@ def page_cl_group():
                 bl="var(--green)" if done else "var(--border2)"
                 op="opacity:.55;" if done else ""
                 sth="text-decoration:line-through;" if done else ""
-                # Mobile-friendly: stack vertically, no side columns
                 with st.container():
-                    # Info row
-                    done=bool(cl["sudah_siap"]); dibawa=cl.get("dibawa_nama") or ""
-                    lbl_col={"Wajib":"red","Disarankan":"orange","Opsional":"gray"}.get(cl["label"],"gray")
-                    bg="rgba(34,197,94,.06)" if done else "var(--raised)"
-                    bd="rgba(34,197,94,.4)" if done else "var(--border)"
-                    bl="var(--green)" if done else "var(--border2)"
-                    op="opacity:.55;" if done else ""
-                    sth="text-decoration:line-through;" if done else ""
-                    # Checkbox + info in single row, delete below on mobile
-                    c_chk,c_info=st.columns([1,10])
+                    # Semua elemen dalam satu baris: checkbox | info | hapus
+                    if admin:
+                        c_chk, c_info, c_del = st.columns([1, 10, 1])
+                    else:
+                        c_chk, c_info = st.columns([1, 11])
                     with c_chk:
-                        st.markdown("<div style='padding-top:6px;'>",unsafe_allow_html=True)
+                        st.markdown("<div style='padding-top:14px;'>", unsafe_allow_html=True)
                         nv=st.checkbox("",value=done,key="clg_{}".format(cl["id"]),label_visibility="collapsed")
                         if nv!=done: L.toggle_checklist_group(cl["id"],nv); st.rerun()
-                        st.markdown("</div>",unsafe_allow_html=True)
+                        st.markdown("</div>", unsafe_allow_html=True)
                     with c_info:
-                        st.markdown("<div style='background:{bg};border:1px solid {bd};border-left:3px solid {bl};border-radius:10px;padding:9px 14px;{op}'><div style='font-size:13.5px;font-weight:700;color:var(--txt);line-height:1.3;{sth}'>{nm}</div><div style='display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;'>{lb}<span style='font-size:11px;color:var(--txt3);'>{ic} {cat}</span><span style='font-size:11px;color:{dc};'>· {dh}</span></div></div>".format(
-                            bg=bg,bd=bd,bl=bl,op=op,sth=sth,nm=cl["nama_item"],lb=badge(cl["label"],lbl_col),
-                            ic=cl.get("icon","📦"),cat=cl.get("nama_kategori") or "—",
-                            dc="var(--teal)" if dibawa else "var(--txt3)",
-                            dh="🎒 {}".format(dibawa) if dibawa else "⏳ belum assign"),unsafe_allow_html=True)
+                        st.markdown(
+                            "<div style='background:{bg};border:1px solid {bd};border-left:3px solid {bl};"
+                            "border-radius:10px;padding:9px 14px;{op}'>"
+                            "<div style='font-size:13.5px;font-weight:700;color:var(--txt);line-height:1.3;{sth}'>{nm}</div>"
+                            "<div style='display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;'>"
+                            "{lb}<span style='font-size:11px;color:var(--txt3);'>{ic} {cat}</span>"
+                            "<span style='font-size:11px;color:{dc};'>· {dh}</span>"
+                            "</div></div>".format(
+                                bg=bg,bd=bd,bl=bl,op=op,sth=sth,nm=cl["nama_item"],lb=badge(cl["label"],lbl_col),
+                                ic=cl.get("icon","📦"),cat=cl.get("nama_kategori") or "—",
+                                dc="var(--teal)" if dibawa else "var(--txt3)",
+                                dh="🎒 {}".format(dibawa) if dibawa else "⏳ belum assign"),
+                            unsafe_allow_html=True)
                     if admin:
-                        _,c_del=st.columns([10,1])
                         with c_del:
-                            st.markdown("<div style='padding-bottom:4px;'>",unsafe_allow_html=True)
+                            st.markdown("<div style='padding-top:10px;'>", unsafe_allow_html=True)
                             confirm_del("clg_{}".format(cl["id"]),lambda cid=cl["id"]:L.delete_checklist_group(cid),"🗑️","Hapus {}?".format(cl["nama_item"]))
-                            st.markdown("</div>",unsafe_allow_html=True)
+                            st.markdown("</div>", unsafe_allow_html=True)
                     st.markdown("<div style='height:4px'></div>",unsafe_allow_html=True)
 
     if admin:
@@ -2244,6 +2245,11 @@ def page_cl_personal():
     is_own = admin or (sel_m.get("email") or "").lower()==email.lower()
 
     fl,fs,so,fq=_cl_filters("clp")
+    # Bersihkan item kelompok yang salah masuk ke personal (data lama)
+    if admin:
+        cleaned = L.cleanup_kelompok_from_personal(trip_id)
+        if cleaned > 0:
+            alert("🧹 {} item kelompok dibersihkan dari checklist personal.".format(cleaned), "success")
     items=L.get_checklist_personal(trip_id,mid,sort_by=so,f_label=fl,f_sumber=fs,search=fq)
     total=len(items); siap=sum(1 for i in items if i["sudah_siap"])
     pct=int(siap/total*100) if total else 0
@@ -2275,28 +2281,34 @@ def page_cl_personal():
                 bg="rgba(34,197,94,.06)" if done else "var(--raised)"; bd="rgba(34,197,94,.4)" if done else "var(--border)"
                 bl="var(--green)" if done else "var(--border2)"; op="opacity:.55;" if done else ""; sth="text-decoration:line-through;" if done else ""
                 with st.container():
-                    done=bool(cl["sudah_siap"]); lbl_col={"Wajib":"red","Disarankan":"orange","Opsional":"gray"}.get(cl["label"],"gray")
-                    bg="rgba(34,197,94,.06)" if done else "var(--raised)"; bd="rgba(34,197,94,.4)" if done else "var(--border)"
-                    bl="var(--green)" if done else "var(--border2)"; op="opacity:.55;" if done else ""; sth="text-decoration:line-through;" if done else ""
-                    c_chk,c_info=st.columns([1,10])
+                    if is_own:
+                        c_chk, c_info, c_del = st.columns([1, 10, 1])
+                    else:
+                        c_chk, c_info = st.columns([1, 11])
                     with c_chk:
-                        st.markdown("<div style='padding-top:6px;'>",unsafe_allow_html=True)
+                        st.markdown("<div style='padding-top:14px;'>", unsafe_allow_html=True)
                         if is_own:
                             nv=st.checkbox("",value=done,key="clp_{}".format(cl["id"]),label_visibility="collapsed")
                             if nv!=done: L.toggle_checklist_personal(cl["id"],nv); st.rerun()
                         else:
                             st.markdown("<span style='font-size:16px;'>{}</span>".format("✅" if done else "⬜"),unsafe_allow_html=True)
-                        st.markdown("</div>",unsafe_allow_html=True)
+                        st.markdown("</div>", unsafe_allow_html=True)
                     with c_info:
-                        st.markdown("<div style='background:{bg};border:1px solid {bd};border-left:3px solid {bl};border-radius:10px;padding:9px 14px;{op}'><div style='font-size:13.5px;font-weight:700;color:var(--txt);{sth}'>{nm}</div><div style='display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;'>{lb}<span style='font-size:11px;color:var(--txt3);'>{ic} {cat}</span></div></div>".format(
-                            bg=bg,bd=bd,bl=bl,op=op,sth=sth,nm=cl["nama_item"],lb=badge(cl["label"],lbl_col),
-                            ic=cl.get("icon","📦"),cat=cl.get("nama_kategori") or "—"),unsafe_allow_html=True)
+                        st.markdown(
+                            "<div style='background:{bg};border:1px solid {bd};border-left:3px solid {bl};"
+                            "border-radius:10px;padding:9px 14px;{op}'>"
+                            "<div style='font-size:13.5px;font-weight:700;color:var(--txt);{sth}'>{nm}</div>"
+                            "<div style='display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;'>"
+                            "{lb}<span style='font-size:11px;color:var(--txt3);'>{ic} {cat}</span>"
+                            "</div></div>".format(
+                                bg=bg,bd=bd,bl=bl,op=op,sth=sth,nm=cl["nama_item"],lb=badge(cl["label"],lbl_col),
+                                ic=cl.get("icon","📦"),cat=cl.get("nama_kategori") or "—"),
+                            unsafe_allow_html=True)
                     if is_own:
-                        _,c_del=st.columns([10,1])
                         with c_del:
-                            st.markdown("<div style='padding-bottom:4px;'>",unsafe_allow_html=True)
+                            st.markdown("<div style='padding-top:10px;'>", unsafe_allow_html=True)
                             confirm_del("clp_{}".format(cl["id"]),lambda cid=cl["id"]:L.delete_checklist_personal(cid),"🗑️")
-                            st.markdown("</div>",unsafe_allow_html=True)
+                            st.markdown("</div>", unsafe_allow_html=True)
                     st.markdown("<div style='height:4px'></div>",unsafe_allow_html=True)
 
     if is_own:
