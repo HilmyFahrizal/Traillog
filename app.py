@@ -3620,7 +3620,7 @@ def main():
         "biaya":page_biaya,"rekap":page_rekap,"payments":page_payments,
         "cl_group":page_cl_group,"cl_personal":page_cl_personal,
         "bawa_apa":page_bawa_apa,"berat":page_berat,"notes":page_notes,
-        "exercises":page_exercises,"logistik":page_logisti"""
+        "exercises":page_exercises,"logistik":page_logistik}"""
 app.py — TrailLog v5
 REDESIGN TOTAL: layout, sidebar, semua halaman
 Logic & fitur identik dengan versi sebelumnya.
