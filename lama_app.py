@@ -211,314 +211,22 @@ p,div{font-family:'Plus Jakarta Sans',sans-serif!important;}
 .rekap-tbl .row-net td{color:var(--orange);font-weight:700;font-family:'IBM Plex Mono',monospace;}
 .rekap-tbl .row-neg td{color:var(--green);font-weight:700;font-family:'IBM Plex Mono',monospace;}
 
-/* ═══════════════════════════════════════════════════════════════════════
-   PACKING CHECKLIST ITEM ROW — desain baru: satu baris penuh
-   [☐ check] | [nama + badge-badge] | [🗑️ hapus]
-   ═══════════════════════════════════════════════════════════════════════ */
-
-/* Wrapper kartu per item */
-div.cl-item-row {
-  display: flex !important;
-  align-items: stretch !important;
-  background: var(--raised) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 12px !important;
-  margin-bottom: 6px !important;
-  overflow: hidden !important;
-  transition: border-color .14s, background .14s !important;
-  min-height: 54px !important;
-  width: 100% !important;
-}
-div.cl-item-row:hover {
-  border-color: var(--border2) !important;
-  background: #1a2538 !important;
-}
-div.cl-item-row.cl-done {
-  background: rgba(34,197,94,.04) !important;
-  border-color: rgba(34,197,94,.2) !important;
-}
-
-/* Reset Streamlit columns wrapper di dalam cl-item-row */
-div.cl-item-row [data-testid="stHorizontalBlock"] {
-  width: 100% !important;
-  gap: 0 !important;
-  padding: 0 !important;
-  align-items: stretch !important;
-  flex-wrap: nowrap !important;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  margin: 0 !important;
-  min-height: unset !important;
-  box-shadow: none !important;
-}
-div.cl-item-row [data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-  padding: 0 !important;
-  gap: 0 !important;
-}
-div.cl-item-row div[data-testid="stVerticalBlock"],
-div.cl-item-row div[data-testid="stVerticalBlockBorderWrapper"] {
-  padding: 0 !important;
-  gap: 0 !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-/* Kolom 1: area checkbox */
-div.cl-item-row [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) {
-  flex: 0 0 46px !important;
-  width: 46px !important;
-  min-width: 46px !important;
-  max-width: 46px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border-right: 1px solid var(--border) !important;
-  align-self: stretch !important;
-}
-
-/* Kolom 2: nama + badge */
-div.cl-item-row [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-  padding: 10px 14px !important;
-  display: flex !important;
-  align-items: center !important;
-}
-
-/* Kolom 3: tombol hapus */
-div.cl-item-row [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(3) {
-  flex: 0 0 auto !important;
-  width: auto !important;
-  min-width: 0 !important;
-  padding: 0 10px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border-left: 1px solid var(--border) !important;
-  align-self: stretch !important;
-}
-
-/* Checkbox di dalam row: strip semua dekorasi */
-div.cl-item-row div[data-testid="stCheckbox"] {
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-div.cl-item-row div[data-testid="stCheckbox"]:hover { box-shadow: none !important; border-color: transparent !important; }
-div.cl-item-row div[data-testid="stCheckbox"] label span[data-testid="stMarkdownContainer"],
-div.cl-item-row div[data-testid="stCheckbox"] label p { display: none !important; }
-div.cl-item-row div[data-testid="stCheckbox"] label { width: auto !important; margin: 0 !important; }
-div.cl-item-row div[data-testid="stCheckbox"] input[type="checkbox"] { width: 17px !important; height: 17px !important; }
-
-/* Info block (nama + badges) */
-.cl-item-info { width: 100%; display: flex; flex-direction: column; gap: 5px; }
-
-/* Nama item — tipografi utama */
-.cl-item-nm {
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  color: #e2eaf5 !important;
-  letter-spacing: -.022em !important;
-  line-height: 1.25 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
-div.cl-item-row.cl-done .cl-item-nm {
-  text-decoration: line-through !important;
-  opacity: .35 !important;
-}
-
-/* Baris badge-badge */
-.cl-item-badges {
-  display: flex !important;
-  align-items: center !important;
-  gap: 5px !important;
-  flex-wrap: nowrap !important;
-  overflow: hidden !important;
-}
-div.cl-item-row.cl-done .cl-item-badges { opacity: .35 !important; }
-
-/* Badge prioritas label */
-.cl-badge-pri {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 10px;
-  font-weight: 800;
-  font-family: 'IBM Plex Mono', monospace;
-  letter-spacing: .03em;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.cl-pri-wajib    { background: rgba(239,68,68,.13);  color: #fca5a5; border: 1px solid rgba(239,68,68,.28); }
-.cl-pri-sarankan { background: rgba(245,158,11,.13);  color: #fcd34d; border: 1px solid rgba(245,158,11,.28); }
-.cl-pri-opsional { background: rgba(100,116,139,.12); color: #94a3b8; border: 1px solid rgba(100,116,139,.25); }
-
-/* Badge sumber item */
-.cl-badge-src {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 7px;
-  border-radius: 20px;
-  font-size: 9.5px;
-  font-weight: 700;
-  font-family: 'IBM Plex Mono', monospace;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.cl-src-biaya  { background: rgba(59,130,246,.1);  color: #93c5fd; border: 1px solid rgba(59,130,246,.22); }
-.cl-src-master { background: rgba(34,197,94,.1);   color: #86efac; border: 1px solid rgba(34,197,94,.22); }
-.cl-src-manual { background: rgba(100,116,139,.1); color: #8aa0c0; border: 1px solid rgba(100,116,139,.22); }
-
-/* Badge kategori */
-.cl-badge-cat {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 7px;
-  border-radius: 20px;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--txt3);
-  background: rgba(255,255,255,.04);
-  border: 1px solid var(--border);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-/* Badge pembawa (khusus kelompok) */
-.cl-badge-pembawa {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #67e8f9;
-  background: rgba(6,182,212,.1);
-  border: 1px solid rgba(6,182,212,.22);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-/* Catatan kecil inline */
-.cl-item-note {
-  font-size: 10.5px;
-  color: var(--txt3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex-shrink: 1;
-  min-width: 0;
-}
-
-/* Tombol hapus ghost merah */
-div.cl-item-row .stButton > button {
-  background: transparent !important;
-  border: 1px solid rgba(239,68,68,.25) !important;
-  color: #f87171 !important;
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  padding: 0 !important;
-  width: 30px !important;
-  height: 30px !important;
-  min-height: 30px !important;
-  border-radius: 8px !important;
-  box-shadow: none !important;
-  transform: none !important;
-  line-height: 1 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: background .11s, border-color .11s !important;
-}
-div.cl-item-row .stButton > button:hover {
-  background: rgba(239,68,68,.14) !important;
-  border-color: rgba(239,68,68,.55) !important;
-  color: #fca5a5 !important;
-  transform: none !important;
-  box-shadow: none !important;
-}
-/* Confirm hapus di dalam row */
-div.cl-item-row [data-testid="stText"] p { font-size: 10px !important; color: #fca5a5 !important; margin: 0 !important; white-space: nowrap !important; }
-div.cl-item-row .btn-danger > button { padding: 3px 8px !important; height: 24px !important; min-height: 24px !important; font-size: 10px !important; width: auto !important; }
-div.cl-item-row .btn-gray > button   { padding: 3px 8px !important; height: 24px !important; min-height: 24px !important; font-size: 10px !important; width: auto !important; }
-
-/* Default checkbox di luar card — tetap normal */
-div[data-testid="stCheckbox"] {
-  background: var(--raised) !important;
-  border: 1px solid var(--border) !important;
-  border-left: 3px solid var(--border2) !important;
-  border-radius: 10px !important;
-  padding: 10px 14px !important;
-  margin-bottom: 0 !important;
-  transition: border-color .15s !important;
-  width: 100% !important;
-}
-div[data-testid="stCheckbox"]:hover { border-color: var(--border2) !important; }
-div[data-testid="stCheckbox"]:has(input:checked) {
-  background: rgba(34,197,94,.07) !important;
-  border-color: rgba(34,197,94,.4) !important;
-  border-left-color: var(--green) !important;
-}
-div[data-testid="stCheckbox"] label {
-  color: var(--txt) !important; font-size: 13.5px !important;
-  font-weight: 600 !important; cursor: pointer !important; width: 100% !important;
-}
-div[data-testid="stCheckbox"] label p:last-child {
-  font-size: 11.5px !important; color: var(--txt2) !important;
-  font-weight: 400 !important; margin-top: 2px !important;
-}
-div[data-testid="stCheckbox"]:has(input:checked) label p:first-child {
-  text-decoration: line-through !important; opacity: .55 !important;
-}
-
-/* Source group header */
-.src-grp-hdr {
-  display: flex; align-items: center; gap: 10px;
-  padding: 14px 0 8px; margin-bottom: 6px;
-  border-bottom: 1px solid var(--border);
-}
-.src-grp-title { font-size: 12px; font-weight: 600; color: var(--txt2); }
-.src-grp-count {
-  margin-left: auto; font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px; color: var(--txt3);
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 10px; padding: 2px 8px;
-}
-
-/* Mobile */
-@media(max-width:768px){
-  .pw{padding:14px 10px 40px;}
-  .page-title{font-size:18px!important;}
-  .stTabs [data-baseweb="tab"]{font-size:11px!important;padding:8px 10px!important;}
-  div.cl-item-row { min-height:48px !important; }
-  div.cl-item-row [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) { flex:0 0 38px !important; min-width:38px !important; width:38px !important; }
-  div.cl-item-row [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) { padding:8px 10px !important; }
-  .cl-item-nm { font-size:12.5px !important; }
-  .cl-badge-pri,.cl-badge-src,.cl-badge-cat { font-size:9px !important; padding:1px 5px !important; }
-  div.cl-item-row .stButton > button { width:26px !important; height:26px !important; font-size:12px !important; }
-}
-
-/* Legacy */
+/* ─ Item / checklist row ─ */
 .irow{background:var(--raised);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:6px;transition:border-color .14s;}
 .irow:hover{border-color:var(--border2);}
+.cl-done{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.3)!important;}
+
+/* ─ Scrollbar ─ */
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 ::-webkit-scrollbar-thumb:hover{background:var(--border2);}
+
+/* ─ Animation ─ */
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* ─ Mobile ─ */
+@media(max-width:768px){.pw{padding:14px 12px 40px;}.page-title{font-size:18px!important;}.stTabs [data-baseweb="tab"]{font-size:11px!important;padding:8px 10px!important;}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -2267,22 +1975,17 @@ def page_payments():
                 st2="✅ Lunas" if sisa<=0 else "Sisa {}".format(L.fmt_rp(sisa))
             else: pct=100; sc="#06b6d4"; st2="💚 Piutang {}".format(L.fmt_rp(sisa_tanggungan_m))
             mng_str=" · Menanggung (orang lain): <b style='color:var(--orange);'>{}</b>".format(L.fmt_rp(max(0,mng-tag))) if mng>0 else ""
-            # Hitung uang lebih
-            lebih_m=max(0,terbayar_m-max(0,net)) if net>0 else 0
-            lebih_str_s=""
-            if lebih_m>0:
-                lebih_str_s=" · <b style='color:var(--teal);'>Lebih: {}</b>".format(L.fmt_rp(lebih_m))
             st.markdown("""
 <div class='card'>
   <div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;'>
     <div>
       <div style='font-size:13px;font-weight:700;color:var(--txt);'>👤 {nm}</div>
-      <div style='font-size:11px;color:var(--txt3);font-family:IBM Plex Mono,monospace;margin-top:3px;'>Tagihan: {tag}{mng} · Terbayar: <b style='color:var(--accent2);'>{paid}</b>{lebih}</div>
+      <div style='font-size:11px;color:var(--txt3);font-family:IBM Plex Mono,monospace;margin-top:3px;'>Tagihan: {tag}{mng} · Terbayar: <b style='color:var(--accent2);'>{paid}</b></div>
     </div>
     <div style='font-size:13px;font-weight:700;color:{sc};'>{st2}</div>
   </div>
   <div class='prog' style='margin-top:8px;'><div class='prog-fill' style='width:{pct}%;background:{sc};'></div></div>
-</div>""".format(nm=m["nama_lengkap"],tag=L.fmt_rp(tag),mng=mng_str,paid=L.fmt_rp(terbayar_m),lebih=lebih_str_s,sc=sc,st2=st2,pct=pct),unsafe_allow_html=True)
+</div>""".format(nm=m["nama_lengkap"],tag=L.fmt_rp(tag),mng=mng_str,paid=L.fmt_rp(terbayar_m),sc=sc,st2=st2,pct=pct),unsafe_allow_html=True)
 
     with tabs[1]:
         if not admin: alert("Pencatatan pembayaran hanya admin.","warning")
@@ -2315,30 +2018,21 @@ def page_payments():
         payments=L.get_payments(trip_id)
         if not payments: alert("Belum ada pembayaran.","info")
         else:
-            total_p2=sum(float(p.get("jumlah_dibayar") or p.get("jumlah") or 0) for p in payments)
+            total_p2=sum(float(p["jumlah"]) for p in payments)
             st.metric("Total Terbayar",L.fmt_rp(total_p2))
-            for p in sorted(payments,key=lambda x:x.get("tanggal_bayar") or x.get("tanggal",""),reverse=True):
-                tgl_raw=p.get("tanggal_bayar") or p.get("tanggal","")
-                tgl_f=tgl_raw.strftime("%d %b %Y") if hasattr(tgl_raw,"strftime") else str(tgl_raw)
-                jml_p=float(p.get("jumlah_dibayar") or p.get("jumlah") or 0)
-                net_m2=net_tagihan.get(p.get("member_id"),0)
-                paid_so_far=paid_all.get(p.get("member_id"),0)
-                # cek apakah ada uang lebih (total bayar melebihi net tagihan)
-                lebih_str=""
-                if net_m2>0 and paid_so_far>net_m2:
-                    lebih=paid_so_far-net_m2
-                    lebih_str="<span style='background:rgba(6,182,212,.15);color:#67e8f9;border:1px solid rgba(6,182,212,.3);padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;margin-left:8px;'>💰 Lebih {}</span>".format(L.fmt_rp(lebih))
+            for p in sorted(payments,key=lambda x:x["tanggal"],reverse=True):
+                tgl_f=p["tanggal"].strftime("%d %b %Y") if hasattr(p["tanggal"],"strftime") else str(p["tanggal"])
                 st.markdown("""
 <div class='card card-green' style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;'>
   <div>
-    <div style='font-size:13px;font-weight:700;color:var(--txt);'>👤 {nm}{lebih}</div>
+    <div style='font-size:13px;font-weight:700;color:var(--txt);'>👤 {nm}</div>
     <div style='font-size:11px;color:var(--txt3);margin-top:2px;'>📅 {tgl} · 💳 {mt}{ct}</div>
   </div>
   <div style='font-size:20px;font-weight:700;color:var(--green);font-family:IBM Plex Mono,monospace;'>{jml}</div>
-</div>""".format(nm=p.get("nama_lengkap",p.get("member_id","")),lebih=lebih_str,
-                 tgl=tgl_f,mt=p.get("metode_bayar") or p.get("metode","Transfer"),
-                 ct=" · "+p["keterangan"] if p.get("keterangan") else ("· "+p["catatan"] if p.get("catatan") else ""),
-                 jml=L.fmt_rp(jml_p)),unsafe_allow_html=True)
+</div>""".format(nm=p.get("nama_lengkap",p.get("member_id","")),
+                 tgl=tgl_f,mt=p.get("metode","Transfer"),
+                 ct=" · "+p["catatan"] if p.get("catatan") else "",
+                 jml=L.fmt_rp(p["jumlah"])),unsafe_allow_html=True)
 
     with tabs[3]:
         sec("🏦 Rekening Transfer")
@@ -2430,61 +2124,37 @@ def page_cl_group():
             grp=by_src.get(src,[])
             if not grp: continue
             lbl={"Biaya":"dari Input Biaya","Master":"dari Item Master","Manual":"Input Manual"}.get(src,src)
-            st.markdown(
-                "<div class='src-grp-hdr'>{bdg}<span class='src-grp-title'>{lbl}</span>"
-                "<span class='src-grp-count'>{n}</span></div>".format(
-                    bdg=badge(src,SRCCOL.get(src,"gray")),lbl=lbl,n=len(grp)),
-                unsafe_allow_html=True)
+            st.markdown("<div style='font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;padding:10px 0 5px;border-bottom:1px solid var(--border);margin-bottom:8px;'>{} {}</div>".format(badge(src,SRCCOL.get(src,"gray")),lbl),unsafe_allow_html=True)
             for cl in grp:
-                done = bool(cl["sudah_siap"])
-                cid = cl["id"]
-                nm = cl["nama_item"]
-                ic = cl.get("icon","📦")
-                cat = cl.get("nama_kategori") or "—"
-                catatan = cl.get("catatan") or ""
-                dibawa = cl.get("dibawa_nama") or ""
-                src = cl.get("sumber","Manual")
-
-                done_cls = " cl-done" if done else ""
-                pri_cls = {"Wajib":"cl-pri-wajib","Disarankan":"cl-pri-sarankan","Opsional":"cl-pri-opsional"}.get(cl["label"],"cl-pri-opsional")
-                src_cls = {"Biaya":"cl-src-biaya","Master":"cl-src-master","Manual":"cl-src-manual"}.get(src,"cl-src-manual")
-
-                pembawa_html = ""
-                if dibawa:
-                    pembawa_html = "<span class='cl-badge-pembawa'>🎒 {}</span>".format(dibawa)
-
-                note_html = ""
-                if catatan:
-                    note_html = "<span class='cl-item-note'>💬 {}</span>".format(catatan)
-
-                info_html = (
-                    "<div class='cl-item-info'>"
-                    "<span class='cl-item-nm'>{nm}</span>"
-                    "<div class='cl-item-badges'>"
-                    "<span class='cl-badge-pri {pri}'>{lbl}</span>"
-                    "<span class='cl-badge-cat'>{ic} {cat}</span>"
-                    "<span class='cl-badge-src {src_cls}'>{src}</span>"
-                    "{pembawa}"
-                    "{note}"
-                    "</div>"
-                    "</div>"
-                ).format(nm=nm, pri=pri_cls, lbl=cl["label"], ic=ic, cat=cat,
-                         src_cls=src_cls, src=src, pembawa=pembawa_html, note=note_html)
-
-                st.markdown("<div class='cl-item-row{}'>".format(done_cls), unsafe_allow_html=True)
+                done=bool(cl["sudah_siap"]); dibawa=cl.get("dibawa_nama") or ""
+                lbl_col={"Wajib":"red","Disarankan":"orange","Opsional":"gray"}.get(cl["label"],"gray")
+                bg="rgba(34,197,94,.06)" if done else "var(--raised)"
+                bd="rgba(34,197,94,.4)" if done else "var(--border)"
+                bl="var(--green)" if done else "var(--border2)"
+                op="opacity:.55;" if done else ""
+                sth="text-decoration:line-through;" if done else ""
+                # Member tidak bisa hapus, hanya centang
                 if admin:
-                    c_chk, c_info, c_del = st.columns([0.055, 1, 0.075])
+                    c_chk,c_info,c_del=st.columns([1,9,1])
                 else:
-                    c_chk, c_info = st.columns([0.055, 1]); c_del = None
+                    c_chk,c_info=st.columns([1,10])
+                    c_del=None
                 with c_chk:
-                    nv = st.checkbox("", value=done, key="clg_{}".format(cid))
-                    if nv != done: L.toggle_checklist_group(cid, nv); st.rerun()
+                    st.markdown("<div style='padding-top:6px;'>",unsafe_allow_html=True)
+                    nv=st.checkbox("",value=done,key="clg_{}".format(cl["id"]),label_visibility="collapsed")
+                    if nv!=done: L.toggle_checklist_group(cl["id"],nv); st.rerun()
+                    st.markdown("</div>",unsafe_allow_html=True)
                 with c_info:
-                    st.markdown(info_html, unsafe_allow_html=True)
-                if c_del:
+                    st.markdown("<div style='background:{bg};border:1px solid {bd};border-left:3px solid {bl};border-radius:10px;padding:9px 14px;{op}{sth}'><div style='font-size:13.5px;font-weight:700;color:var(--txt);line-height:1.3;'>{nm}</div><div style='display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;'>{lb}<span style='font-size:11px;color:var(--txt3);'>{ic} {cat}</span><span style='font-size:11px;color:{dc};'>· {dh}</span></div></div>".format(
+                        bg=bg,bd=bd,bl=bl,op=op,sth=sth,nm=cl["nama_item"],lb=badge(cl["label"],lbl_col),
+                        ic=cl.get("icon","📦"),cat=cl.get("nama_kategori") or "—",
+                        dc="var(--teal)" if dibawa else "var(--txt3)",
+                        dh="🎒 {}".format(dibawa) if dibawa else "⏳ belum assign"),unsafe_allow_html=True)
+                if c_del is not None:
                     with c_del:
-                        confirm_del("clg_{}".format(cid), lambda c=cid: L.delete_checklist_group(c), "🗑️", "Hapus?")
-                st.markdown('</div>', unsafe_allow_html=True)
+                        st.markdown("<div style='padding-top:6px;'>",unsafe_allow_html=True)
+                        confirm_del("clg_{}".format(cl["id"]),lambda cid=cl["id"]:L.delete_checklist_group(cid),"🗑️","Hapus {}?".format(cl["nama_item"]))
+                        st.markdown("</div>",unsafe_allow_html=True)
 
     if admin:
         msep()
@@ -2552,11 +2222,6 @@ def page_cl_personal():
     is_own = admin or (sel_m.get("email") or "").lower()==email.lower()
 
     fl,fs,so,fq=_cl_filters("clp")
-    # Bersihkan item kelompok yang salah masuk ke personal (data lama)
-    if admin:
-        cleaned = L.cleanup_kelompok_from_personal(trip_id)
-        if cleaned > 0:
-            alert("🧹 {} item kelompok dibersihkan dari checklist personal.".format(cleaned), "success")
     items=L.get_checklist_personal(trip_id,mid,sort_by=so,f_label=fl,f_sumber=fs,search=fq)
     total=len(items); siap=sum(1 for i in items if i["sudah_siap"])
     pct=int(siap/total*100) if total else 0
@@ -2582,60 +2247,33 @@ def page_cl_personal():
         for src in ["Biaya","Master","Manual"]:
             grp=by_src.get(src,[])
             if not grp: continue
-            st.markdown(
-                "<div class='src-grp-hdr'>{bdg}<span class='src-grp-title'>{lbl}</span>"
-                "<span class='src-grp-count'>{n}</span></div>".format(
-                    bdg=badge(src,SRCCOL.get(src,"gray")),
-                    lbl={"Biaya":"dari Input Biaya","Master":"dari Item Master","Manual":"Input Manual"}.get(src,src),
-                    n=len(grp)),
-                unsafe_allow_html=True)
+            st.markdown("<div style='font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;padding:10px 0 5px;border-bottom:1px solid var(--border);margin-bottom:8px;'>{}</div>".format(badge(src,SRCCOL.get(src,"gray"))),unsafe_allow_html=True)
             for cl in grp:
-                done = bool(cl["sudah_siap"])
-                cid = cl["id"]
-                nm = cl["nama_item"]
-                ic = cl.get("icon","📦")
-                cat = cl.get("nama_kategori") or "—"
-                catatan = cl.get("catatan") or ""
-                src = cl.get("sumber","Manual")
-
-                done_cls = " cl-done" if done else ""
-                pri_cls = {"Wajib":"cl-pri-wajib","Disarankan":"cl-pri-sarankan","Opsional":"cl-pri-opsional"}.get(cl["label"],"cl-pri-opsional")
-                src_cls = {"Biaya":"cl-src-biaya","Master":"cl-src-master","Manual":"cl-src-manual"}.get(src,"cl-src-manual")
-
-                note_html = ""
-                if catatan:
-                    note_html = "<span class='cl-item-note'>💬 {}</span>".format(catatan)
-
-                info_html = (
-                    "<div class='cl-item-info'>"
-                    "<span class='cl-item-nm'>{nm}</span>"
-                    "<div class='cl-item-badges'>"
-                    "<span class='cl-badge-pri {pri}'>{lbl}</span>"
-                    "<span class='cl-badge-cat'>{ic} {cat}</span>"
-                    "<span class='cl-badge-src {src_cls}'>{src}</span>"
-                    "{note}"
-                    "</div>"
-                    "</div>"
-                ).format(nm=nm, pri=pri_cls, lbl=cl["label"], ic=ic, cat=cat,
-                         src_cls=src_cls, src=src, note=note_html)
-
-                st.markdown("<div class='cl-item-row{}'>".format(done_cls), unsafe_allow_html=True)
+                done=bool(cl["sudah_siap"]); lbl_col={"Wajib":"red","Disarankan":"orange","Opsional":"gray"}.get(cl["label"],"gray")
+                bg="rgba(34,197,94,.06)" if done else "var(--raised)"; bd="rgba(34,197,94,.4)" if done else "var(--border)"
+                bl="var(--green)" if done else "var(--border2)"; op="opacity:.55;" if done else ""; sth="text-decoration:line-through;" if done else ""
                 if is_own:
-                    c_chk, c_info, c_del = st.columns([0.055, 1, 0.075])
-                    with c_chk:
-                        nv = st.checkbox("", value=done, key="clp_{}".format(cid))
-                        if nv != done: L.toggle_checklist_personal(cid, nv); st.rerun()
-                    with c_info:
-                        st.markdown(info_html, unsafe_allow_html=True)
-                    with c_del:
-                        confirm_del("clp_{}".format(cid), lambda c=cid: L.delete_checklist_personal(c), "🗑️", "Hapus?")
+                    c_chk,c_info,c_del=st.columns([1,9,1])
                 else:
-                    c_chk, c_info = st.columns([0.055, 1])
-                    with c_chk:
-                        st.checkbox("", value=done, key="clp_{}".format(cid), disabled=True)
-                    with c_info:
-                        st.markdown(info_html, unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True)
+                    c_chk,c_info=st.columns([1,10]); c_del=None
+                with c_chk:
+                    st.markdown("<div style='padding-top:6px;'>",unsafe_allow_html=True)
+                    if is_own:
+                        nv=st.checkbox("",value=done,key="clp_{}".format(cl["id"]),label_visibility="collapsed")
+                        if nv!=done: L.toggle_checklist_personal(cl["id"],nv); st.rerun()
+                    else:
+                        # View-only: show read-only indicator
+                        st.markdown("<span style='font-size:16px;'>{}</span>".format("✅" if done else "⬜"),unsafe_allow_html=True)
+                    st.markdown("</div>",unsafe_allow_html=True)
+                with c_info:
+                    st.markdown("<div style='background:{bg};border:1px solid {bd};border-left:3px solid {bl};border-radius:10px;padding:9px 14px;{op}{sth}'><div style='font-size:13.5px;font-weight:700;color:var(--txt);'>{nm}</div><div style='display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;'>{lb}<span style='font-size:11px;color:var(--txt3);'>{ic} {cat}</span></div></div>".format(
+                        bg=bg,bd=bd,bl=bl,op=op,sth=sth,nm=cl["nama_item"],lb=badge(cl["label"],lbl_col),
+                        ic=cl.get("icon","📦"),cat=cl.get("nama_kategori") or "—"),unsafe_allow_html=True)
+                if c_del is not None:
+                    with c_del:
+                        st.markdown("<div style='padding-top:6px;'>",unsafe_allow_html=True)
+                        confirm_del("clp_{}".format(cl["id"]),lambda cid=cl["id"]:L.delete_checklist_personal(cid),"🗑️")
+                        st.markdown("</div>",unsafe_allow_html=True)
 
     if is_own:
         msep()
@@ -3338,27 +2976,21 @@ def page_exercises():
             if otot:
                 otot_row="<div style='margin-top:10px;font-size:11px;color:#4a6080;'><span style='color:#3b82f650;'>▸</span> 💪 Otot: <span style='color:#6b8ab0;'>{}</span></div>".format(otot)
 
-            # Container per exercise dengan border dan margin bawah yang jelas
+            # Preview bar (visible before dropdown opened)
             fokus_chip=""
             if ex.get("fokus"):
                 fokus_chip="<span style='background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);border-radius:20px;padding:2px 10px;font-size:11px;color:#3b82f6;font-weight:600;'>🎯 {}</span>".format(ex["fokus"])
             alat_chip=""
             if alat!="Tanpa Alat":
                 alat_chip="<span style='background:#1c2638;border:1px solid #2e3f58;border-radius:20px;padding:2px 10px;font-size:11px;color:#4a6080;'>🔧 {}</span>".format(alat)
-
-            # Wrap expander in a styled container for spacing
-            st.markdown("""<div style='background:var(--card);border:1px solid var(--border);
-                border-radius:12px;margin-bottom:10px;overflow:hidden;'>""", unsafe_allow_html=True)
-
-            # Badge row INSIDE the card, above the expander
             st.markdown("""<div style='display:flex;align-items:center;gap:8px;
-                padding:10px 16px 0;flex-wrap:wrap;'>
+                padding:0 16px 6px;margin-top:-8px;flex-wrap:wrap;'>
                 <span style='background:{bg};border:1px solid {col}44;border-radius:20px;
-                  padding:3px 12px;font-size:11px;font-weight:700;color:{col};'>{lvl}</span>
+                  padding:2px 10px;font-size:11px;font-weight:700;color:{col};'>{lvl}</span>
                 <span style='background:rgba(100,116,139,.08);border:1px solid #2e3f58;border-radius:20px;
-                  padding:3px 12px;font-size:11px;color:#64748b;'>⏱ {dur} mnt</span>
+                  padding:2px 10px;font-size:11px;color:#64748b;'>⏱ {dur} mnt</span>
                 <span style='background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:20px;
-                  padding:3px 12px;font-size:11px;color:#f87171;'>🔥 {kal} kal</span>
+                  padding:2px 10px;font-size:11px;color:#f87171;'>🔥 {kal} kal</span>
                 {fokus}{alat}
                 </div>""".format(
                 bg=lvl_bg,col=lvl_c,lvl=ex["level"],
@@ -3463,9 +3095,6 @@ def page_exercises():
                             if st.form_submit_button("🗑️ Hapus",use_container_width=True):
                                 L.delete_exercise(ex["id"]); st.rerun()
                             st.markdown('</div>',unsafe_allow_html=True)
-
-            # Close exercise card container
-            st.markdown("</div>", unsafe_allow_html=True)
 
     _pw_end()
 
