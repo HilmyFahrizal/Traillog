@@ -211,171 +211,8 @@ p,div{font-family:'Plus Jakarta Sans',sans-serif!important;}
 .rekap-tbl .row-net td{color:var(--orange);font-weight:700;font-family:'IBM Plex Mono',monospace;}
 .rekap-tbl .row-neg td{color:var(--green);font-weight:700;font-family:'IBM Plex Mono',monospace;}
 
-/* ═══════════════════════════════════════════════════════════════════════
-   PACKING CHECKLIST CARD — 1 ROW: [checkbox|info] [hapus]
-   Strategy: wrap a st.columns([flex, auto]) pair inside a styled container.
-   The container is a real CSS row. We style every Streamlit layer to zero
-   out its own padding/margin so the columns sit flush inside our card.
-   ═══════════════════════════════════════════════════════════════════════ */
-
-/* 1. The outer card div we inject via st.markdown */
-.cl-row-card {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  background: var(--raised);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  margin-bottom: 7px;
-  overflow: hidden;
-  transition: border-color .15s, box-shadow .15s;
-  min-height: 62px;
-}
-.cl-row-card:hover {
-  border-color: var(--border2);
-  box-shadow: 0 4px 18px rgba(0,0,0,.28);
-}
-.cl-row-card-done {
-  background: rgba(34,197,94,.06) !important;
-  border-color: rgba(34,197,94,.28) !important;
-}
-
-/* 2. Kill ALL Streamlit wrapper padding/gap inside our card */
-.cl-row-card > div,
-.cl-row-card [data-testid="stHorizontalBlock"],
-.cl-row-card [data-testid="column"],
-.cl-row-card [data-testid="stVerticalBlock"],
-.cl-row-card [data-testid="stVerticalBlockBorderWrapper"] {
-  padding: 0 !important;
-  margin: 0 !important;
-  gap: 0 !important;
-  border: none !important;
-  background: transparent !important;
-}
-/* stHorizontalBlock must be flex row filling card */
-.cl-row-card [data-testid="stHorizontalBlock"] {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  width: 100% !important;
-  flex-wrap: nowrap !important;
-}
-/* Checkbox column: grows to fill all remaining space */
-.cl-row-card [data-testid="column"]:first-child {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-}
-/* Delete column: shrinks to content */
-.cl-row-card [data-testid="column"]:last-child {
-  flex: 0 0 auto !important;
-  width: auto !important;
-  padding-right: 12px !important;
-}
-
-/* 3. Checkbox widget itself: transparent, no border, full padding */
-.cl-row-card div[data-testid="stCheckbox"] {
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  padding: 13px 12px 13px 16px !important;
-  margin: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-.cl-row-card div[data-testid="stCheckbox"]:hover {
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
-.cl-row-card div[data-testid="stCheckbox"]:has(input:checked) {
-  background: transparent !important;
-  border-color: transparent !important;
-}
-
-/* 4. Checkbox label: item name BIG + bright */
-.cl-row-card div[data-testid="stCheckbox"] label {
-  color: #e2eaf5 !important;
-  cursor: pointer !important;
-  width: 100% !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 3px !important;
-}
-.cl-row-card div[data-testid="stCheckbox"] label p:first-child {
-  font-size: 15px !important;
-  font-weight: 700 !important;
-  color: #e2eaf5 !important;
-  letter-spacing: -.02em !important;
-  margin: 0 !important;
-  line-height: 1.3 !important;
-}
-.cl-row-card div[data-testid="stCheckbox"] label p:last-child {
-  font-size: 12px !important;
-  color: #8aa0c0 !important;
-  font-weight: 500 !important;
-  margin: 0 !important;
-  line-height: 1.5 !important;
-}
-
-/* 5. Checked state */
-.cl-row-card div[data-testid="stCheckbox"]:has(input:checked) label p:first-child {
-  text-decoration: line-through !important;
-  opacity: .4 !important;
-  color: #8aa0c0 !important;
-}
-.cl-row-card div[data-testid="stCheckbox"]:has(input:checked) label p:last-child {
-  opacity: .35 !important;
-}
-
-/* 6. Delete button inside card — compact ghost-red */
-.cl-row-card .stButton > button {
-  background: transparent !important;
-  border: 1px solid rgba(239,68,68,.28) !important;
-  color: #f87171 !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  padding: 5px 12px !important;
-  min-height: 30px !important;
-  height: 30px !important;
-  border-radius: 7px !important;
-  box-shadow: none !important;
-  transform: none !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
-  transition: background .12s, border-color .12s !important;
-}
-.cl-row-card .stButton > button:hover {
-  background: rgba(239,68,68,.15) !important;
-  border-color: rgba(239,68,68,.55) !important;
-  color: #fca5a5 !important;
-  transform: none !important;
-  box-shadow: none !important;
-}
-/* Confirm text & confirm buttons inside card */
-.cl-row-card [data-testid="stText"] p,
-.cl-row-card p { font-size: 11px !important; color: #fca5a5 !important; margin: 0 !important; }
-.cl-row-card .btn-danger > button {
-  padding: 4px 10px !important; min-height: 26px !important; height: 26px !important; font-size: 11px !important;
-}
-.cl-row-card .btn-gray > button {
-  padding: 4px 10px !important; min-height: 26px !important; height: 26px !important; font-size: 11px !important;
-}
-
-/* 7. Source group header */
-.src-grp-hdr {
-  display: flex; align-items: center; gap: 10px;
-  padding: 14px 0 8px; margin-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-}
-.src-grp-title { font-size: 12px; font-weight: 600; color: var(--txt2); }
-.src-grp-count {
-  margin-left: auto;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px; color: var(--txt3);
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 10px; padding: 2px 8px;
-}
-
-/* 8. Default checkbox (outside card) — keep original look */
+/* ─ Checklist item: style checkbox native Streamlit sebagai card ─ */
+/* Wrapper container checklist item */
 div[data-testid="stCheckbox"] {
   background: var(--raised) !important;
   border: 1px solid var(--border) !important;
@@ -386,26 +223,159 @@ div[data-testid="stCheckbox"] {
   transition: border-color .15s !important;
   width: 100% !important;
 }
-div[data-testid="stCheckbox"]:hover { border-color: var(--border2) !important; }
+div[data-testid="stCheckbox"]:hover {
+  border-color: var(--border2) !important;
+}
+/* Checkbox checked state */
 div[data-testid="stCheckbox"]:has(input:checked) {
   background: rgba(34,197,94,.07) !important;
   border-color: rgba(34,197,94,.4) !important;
   border-left-color: var(--green) !important;
 }
+/* Label teks dalam checkbox */
 div[data-testid="stCheckbox"] label {
-  color: var(--txt) !important; font-size: 13.5px !important;
-  font-weight: 600 !important; cursor: pointer !important; width: 100% !important;
+  color: var(--txt) !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  width: 100% !important;
 }
+/* Baris kedua (meta info) dalam label lebih kecil */
 div[data-testid="stCheckbox"] label p:last-child {
-  font-size: 11.5px !important; color: var(--txt2) !important;
-  font-weight: 400 !important; margin-top: 2px !important;
+  font-size: 11.5px !important;
+  color: var(--txt3) !important;
+  font-weight: 400 !important;
+  margin-top: 2px !important;
 }
+/* Checked: coret nama item */
 div[data-testid="stCheckbox"]:has(input:checked) label p:first-child {
-  text-decoration: line-through !important; opacity: .55 !important;
+  text-decoration: line-through !important;
+  opacity: .55 !important;
 }
 
-/* Legacy fallback */
-.cl-card-wrap, .cl-del-row { display: none !important; }
+/* ─ Packing checklist card (enhanced) ─ */
+/* ═══ PACKING CHECKLIST CARD ══════════════════════════════════════════════════
+   Full-width card: checkbox + delete button BOTH inside the same box.
+   No st.columns() used — this ensures the wrapper div truly wraps everything.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Outer card container */
+.cl-card-wrap {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 5px;
+  overflow: hidden;
+  transition: border-color .15s, box-shadow .15s;
+}
+.cl-card-wrap:hover {
+  border-color: var(--border2);
+  box-shadow: 0 3px 12px rgba(0,0,0,.22);
+}
+.cl-card-done {
+  background: rgba(34,197,94,.05) !important;
+  border-color: rgba(34,197,94,.25) !important;
+}
+/* ── Checkbox inside card: transparent, full-width, no extra border ── */
+.cl-card-wrap div[data-testid="stCheckbox"] {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 12px 14px 6px 14px !important;
+  margin: 0 !important;
+  width: 100% !important;
+}
+.cl-card-wrap div[data-testid="stCheckbox"]:hover {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.cl-card-wrap div[data-testid="stCheckbox"]:has(input:checked) {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+/* ── Item name: bigger, brighter ── */
+.cl-card-wrap div[data-testid="stCheckbox"] label {
+  color: var(--txt) !important;
+  cursor: pointer !important;
+  width: 100% !important;
+}
+.cl-card-wrap div[data-testid="stCheckbox"] label p:first-child {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: var(--txt) !important;
+  letter-spacing: -.01em !important;
+  margin-bottom: 3px !important;
+}
+/* ── Meta line (label · kategori · assign): visible color ── */
+.cl-card-wrap div[data-testid="stCheckbox"] label p:last-child {
+  font-size: 12px !important;
+  color: var(--txt2) !important;
+  font-weight: 500 !important;
+  margin-top: 0 !important;
+}
+/* ── Checked: strike through name only ── */
+.cl-card-wrap div[data-testid="stCheckbox"]:has(input:checked) label p:first-child {
+  text-decoration: line-through !important;
+  opacity: .45 !important;
+  color: var(--txt2) !important;
+}
+.cl-card-wrap div[data-testid="stCheckbox"]:has(input:checked) label p:last-child {
+  opacity: .45 !important;
+}
+/* ── Delete row: sits at bottom-right inside the card ── */
+.cl-del-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 8px 7px 8px;
+  gap: 6px;
+}
+/* Normal ghost trash button */
+.cl-del-row .stButton > button {
+  background: transparent !important;
+  border: 1px solid rgba(138,160,192,.18) !important;
+  color: var(--txt3) !important;
+  font-size: 11px !important;
+  padding: 1px 9px !important;
+  min-height: 22px !important;
+  height: 22px !important;
+  border-radius: 5px !important;
+  box-shadow: none !important;
+  transform: none !important;
+  line-height: 1 !important;
+  font-weight: 600 !important;
+  transition: background .12s, border-color .12s, color .12s !important;
+}
+.cl-del-row .stButton > button:hover {
+  background: rgba(239,68,68,.1) !important;
+  border-color: rgba(239,68,68,.35) !important;
+  color: var(--red) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+/* Confirm dialog text inside del-row */
+.cl-del-row [data-testid="stText"],
+.cl-del-row p {
+  font-size: 11px !important;
+  color: #fca5a5 !important;
+  margin: 0 !important;
+  padding: 0 4px !important;
+}
+
+/* ── Source group header ── */
+.src-grp-hdr {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 0 7px; margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.src-grp-title { font-size:11px; font-weight:600; color:var(--txt2); }
+.src-grp-count {
+  margin-left: auto;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: var(--txt3);
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1px 7px;
+}
 
 /* ─ Item / checklist row (legacy) ─ */
 .irow{background:var(--raised);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:6px;transition:border-color .14s;}
@@ -422,22 +392,7 @@ div[data-testid="stCheckbox"]:has(input:checked) label p:first-child {
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
 /* ─ Mobile ─ */
-@media(max-width:768px){
-  .pw{padding:14px 10px 40px;}
-  .page-title{font-size:18px!important;}
-  .stTabs [data-baseweb="tab"]{font-size:11px!important;padding:8px 10px!important;}
-  /* Keep card row horizontal on mobile */
-  .cl-row-card [data-testid="stHorizontalBlock"] {
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-  }
-  .cl-row-card [data-testid="column"]:first-child { flex: 1 1 auto !important; min-width: 0 !important; }
-  .cl-row-card [data-testid="column"]:last-child { flex: 0 0 auto !important; padding-right: 8px !important; }
-  .cl-row-card div[data-testid="stCheckbox"] { padding: 10px 8px 10px 12px !important; }
-  .cl-row-card div[data-testid="stCheckbox"] label p:first-child { font-size: 13px !important; }
-  .cl-row-card div[data-testid="stCheckbox"] label p:last-child { font-size: 11px !important; }
-  .cl-row-card .stButton > button { padding: 4px 8px !important; font-size: 10px !important; height: 28px !important; min-height: 28px !important; }
-}
+@media(max-width:768px){.pw{padding:14px 12px 40px;}.page-title{font-size:18px!important;}.stTabs [data-baseweb="tab"]{font-size:11px!important;padding:8px 10px!important;}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -2360,24 +2315,18 @@ def page_cl_group():
                 nm=cl["nama_item"]; cid=cl["id"]
                 dibawa_txt="🎒 {}".format(dibawa) if dibawa else "⏳ —"
                 ic=cl.get("icon","📦"); cat=cl.get("nama_kategori") or "—"
-                done_cls=" cl-row-card-done" if done else ""
-                chk_label="**{}**  \n`{}` · {} {}  ·  {}".format(nm,cl["label"],ic,cat,dibawa_txt)
-                # ── 1-row card: inject card wrapper div, then st.columns fills it ──
-                st.markdown(
-                    '<div class="cl-row-card{}" style="border-left:3px solid {}">'.format(done_cls,lbl_border),
-                    unsafe_allow_html=True)
+                done_cls=" cl-card-done" if done else ""
+                chk_label="**{nm}**  \n`{lb}` · {ic} {cat}  ·  {dh}".format(
+                    nm=nm,lb=cl["label"],ic=ic,cat=cat,dh=dibawa_txt)
+                # Full-width card: NO st.columns() — wrapper div truly wraps everything
+                st.markdown('<div class="cl-card-wrap{}" style="border-left:3px solid {}">'.format(done_cls,lbl_border),unsafe_allow_html=True)
+                nv = st.checkbox(chk_label, value=done, key="clg_{}".format(cid))
+                if nv != done: L.toggle_checklist_group(cid, nv); st.rerun()
                 if admin:
-                    col_chk, col_del = st.columns([1, 0.13])
-                else:
-                    col_chk = st.columns(1)[0]
-                    col_del = None
-                with col_chk:
-                    nv = st.checkbox(chk_label, value=done, key="clg_{}".format(cid))
-                    if nv != done: L.toggle_checklist_group(cid, nv); st.rerun()
-                if col_del is not None:
-                    with col_del:
-                        confirm_del("clg_{}".format(cid), lambda c=cid: L.delete_checklist_group(c), "🗑️", "Hapus {}?".format(nm))
-                st.markdown('</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="cl-del-row">',unsafe_allow_html=True)
+                    confirm_del("clg_{}".format(cid), lambda c=cid: L.delete_checklist_group(c), "🗑️ Hapus", "Hapus {}?".format(nm))
+                    st.markdown('</div>',unsafe_allow_html=True)
+                st.markdown('</div>',unsafe_allow_html=True)
 
     if admin:
         msep()
@@ -2487,24 +2436,19 @@ def page_cl_personal():
                 lbl_border={"Wajib":"#ef4444","Disarankan":"#f59e0b","Opsional":"#475569"}.get(cl["label"],"#243044")
                 nm=cl["nama_item"]; cid=cl["id"]
                 ic=cl.get("icon","📦"); cat=cl.get("nama_kategori") or "—"
-                done_cls=" cl-row-card-done" if done else ""
-                chk_label="**{}**  \n`{}` · {} {}".format(nm,cl["label"],ic,cat)
-                # ── 1-row card: inject card wrapper div, then st.columns fills it ──
-                st.markdown(
-                    '<div class="cl-row-card{}" style="border-left:3px solid {}">'.format(done_cls,lbl_border),
-                    unsafe_allow_html=True)
+                done_cls=" cl-card-done" if done else ""
+                chk_label="**{nm}**  \n`{lb}` · {ic} {cat}".format(nm=nm,lb=cl["label"],ic=ic,cat=cat)
+                # Full-width card: NO st.columns() — wrapper div truly wraps everything
+                st.markdown('<div class="cl-card-wrap{}" style="border-left:3px solid {}">'.format(done_cls,lbl_border),unsafe_allow_html=True)
                 if is_own:
-                    col_chk, col_del = st.columns([1, 0.13])
-                    with col_chk:
-                        nv = st.checkbox(chk_label, value=done, key="clp_{}".format(cid))
-                        if nv != done: L.toggle_checklist_personal(cid, nv); st.rerun()
-                    with col_del:
-                        confirm_del("clp_{}".format(cid), lambda c=cid: L.delete_checklist_personal(c), "🗑️", "Hapus {}?".format(nm))
+                    nv = st.checkbox(chk_label, value=done, key="clp_{}".format(cid))
+                    if nv != done: L.toggle_checklist_personal(cid, nv); st.rerun()
+                    st.markdown('<div class="cl-del-row">',unsafe_allow_html=True)
+                    confirm_del("clp_{}".format(cid), lambda c=cid: L.delete_checklist_personal(c), "🗑️ Hapus", "Hapus {}?".format(nm))
+                    st.markdown('</div>',unsafe_allow_html=True)
                 else:
-                    col_chk = st.columns(1)[0]
-                    with col_chk:
-                        st.checkbox(chk_label, value=done, key="clp_{}".format(cid), disabled=True)
-                st.markdown('</div>', unsafe_allow_html=True)
+                    st.checkbox(chk_label, value=done, key="clp_{}".format(cid), disabled=True)
+                st.markdown('</div>',unsafe_allow_html=True)
 
     if is_own:
         msep()
