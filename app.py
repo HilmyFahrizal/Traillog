@@ -216,6 +216,37 @@ p,div{font-family:'Plus Jakarta Sans',sans-serif!important;}
 .irow:hover{border-color:var(--border2);}
 .cl-done{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.3)!important;}
 
+/* ─ Checklist item: satu baris penuh, checkbox kiri, info tengah, hapus kanan ─ */
+.cl-row{
+  display:flex;align-items:center;gap:0;
+  background:var(--raised);border:1px solid var(--border);border-left:4px solid var(--border2);
+  border-radius:10px;margin-bottom:6px;overflow:hidden;transition:border-color .14s;
+}
+.cl-row.cl-row-done{background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.4);border-left-color:var(--green);}
+.cl-row:hover{border-color:var(--border2);}
+.cl-row-chk{flex:0 0 48px;display:flex;align-items:center;justify-content:center;padding:0 4px;border-right:1px solid var(--border);}
+.cl-row-info{flex:1;min-width:0;padding:10px 12px;}
+.cl-row-nm{font-size:13.5px;font-weight:700;color:var(--txt);line-height:1.35;word-break:break-word;}
+.cl-row-nm.done{text-decoration:line-through;opacity:.55;}
+.cl-row-meta{display:flex;gap:5px;align-items:center;margin-top:4px;flex-wrap:wrap;}
+.cl-row-del{flex:0 0 48px;display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border);}
+
+/* Paksa kolom checklist tidak ada gap & padding horizontal nol */
+.cl-cols [data-testid="column"]{padding:0!important;gap:0!important;}
+.cl-cols [data-testid="stVerticalBlock"]{gap:0!important;}
+/* Checkbox di dalam cl-row: hapus margin, pusatkan */
+.cl-chkbox [data-testid="stCheckbox"]{margin:0!important;padding:0!important;display:flex;align-items:center;justify-content:center;min-height:52px!important;}
+.cl-chkbox [data-testid="stCheckbox"] label{margin:0!important;padding:0!important;}
+.cl-chkbox [data-testid="stCheckbox"] p{display:none!important;}
+/* Tombol hapus kecil compact */
+.cl-delbtn [data-testid="stButton"] button{
+  background:rgba(239,68,68,.12)!important;color:#fca5a5!important;
+  border:1px solid rgba(239,68,68,.25)!important;border-radius:8px!important;
+  padding:6px 8px!important;font-size:14px!important;min-height:36px!important;
+  width:36px!important;
+}
+.cl-delbtn [data-testid="stButton"] button:hover{background:rgba(239,68,68,.3)!important;}
+
 /* ─ Scrollbar ─ */
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
@@ -2142,44 +2173,34 @@ def page_cl_group():
             for cl in grp:
                 done=bool(cl["sudah_siap"]); dibawa=cl.get("dibawa_nama") or ""
                 lbl_col={"Wajib":"red","Disarankan":"orange","Opsional":"gray"}.get(cl["label"],"gray")
-                bg="rgba(34,197,94,.08)" if done else "var(--raised)"
-                bd="rgba(34,197,94,.5)" if done else "var(--border)"
                 bl="var(--green)" if done else "var(--border2)"
+                bg="rgba(34,197,94,.08)" if done else "var(--raised)"
+                bd="rgba(34,197,94,.45)" if done else "var(--border)"
                 nm=cl["nama_item"]; cid=cl["id"]
                 dibawa_txt="🎒 {}".format(dibawa) if dibawa else "⏳ belum assign"
                 dibawa_col="var(--teal)" if dibawa else "var(--txt3)"
                 ic=cl.get("icon","📦"); cat=cl.get("nama_kategori") or "—"
                 lbl_badge=badge(cl["label"],lbl_col)
-                sth="line-through" if done else "none"
-                op="0.6" if done else "1"
-                with st.container():
-                    # Card full-width dengan checkbox di dalam
-                    st.markdown("""
-<div style='background:{bg};border:1px solid {bd};border-left:4px solid {bl};
-  border-radius:10px;padding:12px 14px 10px;margin-bottom:6px;opacity:{op};'>
-  <div style='display:flex;align-items:flex-start;gap:10px;'>
-    <div style='flex:1;min-width:0;'>
-      <div style='font-size:14px;font-weight:700;color:var(--txt);text-decoration:{sth};line-height:1.4;word-break:break-word;'>{nm}</div>
-      <div style='display:flex;gap:6px;align-items:center;margin-top:5px;flex-wrap:wrap;'>
-        {lb}
-        <span style='font-size:11px;color:var(--txt3);'>{ic} {cat}</span>
-        <span style='font-size:11px;color:{dc};'>· {dh}</span>
-      </div>
-    </div>
-  </div>
-</div>""".format(bg=bg,bd=bd,bl=bl,op=op,sth=sth,nm=nm,lb=lbl_badge,ic=ic,cat=cat,dc=dibawa_col,dh=dibawa_txt),unsafe_allow_html=True)
-                    # Checkbox + tombol hapus dalam 1 baris sederhana
-                    if admin:
-                        cb_col, del_col = st.columns([5,1])
-                        with cb_col:
-                            nv=st.checkbox("✅ Sudah siap" if not done else "☑️ Sudah siap",value=done,key="clg_{}".format(cid))
-                            if nv!=done: L.toggle_checklist_group(cid,nv); st.rerun()
-                        with del_col:
-                            confirm_del("clg_{}".format(cid),lambda c=cid:L.delete_checklist_group(c),"🗑️","Hapus {}?".format(nm))
-                    else:
-                        nv=st.checkbox("✅ Sudah siap" if not done else "☑️ Sudah siap",value=done,key="clg_{}".format(cid))
+                sth="text-decoration:line-through;opacity:.5;" if done else ""
+                # ── satu card HTML penuh, columns hanya untuk widget interaktif ──
+                st.markdown("""<div style='background:{bg};border:1px solid {bd};border-left:4px solid {bl};border-radius:10px;padding:11px 14px 4px 14px;margin-bottom:2px;'>
+  <div style='{sth}font-size:14px;font-weight:700;color:var(--txt);line-height:1.35;word-break:break-word;margin-bottom:4px;'>{nm}</div>
+  <div style='display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:6px;'>
+    {lb}<span style='font-size:11px;color:var(--txt3);'>{ic} {cat}</span><span style='font-size:11px;color:{dc};'>· {dh}</span>
+  </div>""".format(bg=bg,bd=bd,bl=bl,sth=sth,nm=nm,lb=lbl_badge,ic=ic,cat=cat,dc=dibawa_col,dh=dibawa_txt),unsafe_allow_html=True)
+                if admin:
+                    c1,c2=st.columns([8,1])
+                    with c1:
+                        nv=st.checkbox("Sudah siap",value=done,key="clg_{}".format(cid),label_visibility="visible")
                         if nv!=done: L.toggle_checklist_group(cid,nv); st.rerun()
-                    st.markdown("<div style='height:2px'></div>",unsafe_allow_html=True)
+                    with c2:
+                        st.markdown('<div class="cl-delbtn">',unsafe_allow_html=True)
+                        confirm_del("clg_{}".format(cid),lambda c=cid:L.delete_checklist_group(c),"🗑️","Hapus {}?".format(nm))
+                        st.markdown('</div>',unsafe_allow_html=True)
+                else:
+                    nv=st.checkbox("Sudah siap",value=done,key="clg_{}".format(cid),label_visibility="visible")
+                    if nv!=done: L.toggle_checklist_group(cid,nv); st.rerun()
+                st.markdown("</div><div style='height:6px'></div>",unsafe_allow_html=True)
 
     if admin:
         msep()
@@ -2280,35 +2301,31 @@ def page_cl_personal():
             st.markdown("<div style='font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;padding:10px 0 5px;border-bottom:1px solid var(--border);margin-bottom:8px;'>{}</div>".format(badge(src,SRCCOL.get(src,"gray"))),unsafe_allow_html=True)
             for cl in grp:
                 done=bool(cl["sudah_siap"]); lbl_col={"Wajib":"red","Disarankan":"orange","Opsional":"gray"}.get(cl["label"],"gray")
-                bg="rgba(34,197,94,.08)" if done else "var(--raised)"
-                bd="rgba(34,197,94,.5)" if done else "var(--border)"
                 bl="var(--green)" if done else "var(--border2)"
+                bg="rgba(34,197,94,.08)" if done else "var(--raised)"
+                bd="rgba(34,197,94,.45)" if done else "var(--border)"
                 nm=cl["nama_item"]; cid=cl["id"]
                 ic=cl.get("icon","📦"); cat=cl.get("nama_kategori") or "—"
                 lbl_badge=badge(cl["label"],lbl_col)
-                sth="line-through" if done else "none"
-                op="0.6" if done else "1"
-                with st.container():
-                    st.markdown("""
-<div style='background:{bg};border:1px solid {bd};border-left:4px solid {bl};
-  border-radius:10px;padding:12px 14px 10px;margin-bottom:6px;opacity:{op};'>
-  <div style='font-size:14px;font-weight:700;color:var(--txt);text-decoration:{sth};line-height:1.4;word-break:break-word;'>{nm}</div>
-  <div style='display:flex;gap:6px;align-items:center;margin-top:5px;flex-wrap:wrap;'>
-    {lb}
-    <span style='font-size:11px;color:var(--txt3);'>{ic} {cat}</span>
-  </div>
-</div>""".format(bg=bg,bd=bd,bl=bl,op=op,sth=sth,nm=nm,lb=lbl_badge,ic=ic,cat=cat),unsafe_allow_html=True)
-                    if is_own:
-                        cb_col, del_col = st.columns([5,1])
-                        with cb_col:
-                            nv=st.checkbox("✅ Sudah siap" if not done else "☑️ Sudah siap",value=done,key="clp_{}".format(cid))
-                            if nv!=done: L.toggle_checklist_personal(cid,nv); st.rerun()
-                        with del_col:
-                            confirm_del("clp_{}".format(cid),lambda c=cid:L.delete_checklist_personal(c),"🗑️")
-                    else:
-                        st.markdown("<div style='font-size:13px;color:var(--txt3);padding:2px 0 6px;'>{} {}</div>".format(
-                            "✅" if done else "⬜", "Sudah siap" if done else "Belum siap"),unsafe_allow_html=True)
-                    st.markdown("<div style='height:2px'></div>",unsafe_allow_html=True)
+                sth="text-decoration:line-through;opacity:.5;" if done else ""
+                st.markdown("""<div style='background:{bg};border:1px solid {bd};border-left:4px solid {bl};border-radius:10px;padding:11px 14px 4px 14px;margin-bottom:2px;'>
+  <div style='{sth}font-size:14px;font-weight:700;color:var(--txt);line-height:1.35;word-break:break-word;margin-bottom:4px;'>{nm}</div>
+  <div style='display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:6px;'>
+    {lb}<span style='font-size:11px;color:var(--txt3);'>{ic} {cat}</span>
+  </div>""".format(bg=bg,bd=bd,bl=bl,sth=sth,nm=nm,lb=lbl_badge,ic=ic,cat=cat),unsafe_allow_html=True)
+                if is_own:
+                    c1,c2=st.columns([8,1])
+                    with c1:
+                        nv=st.checkbox("Sudah siap",value=done,key="clp_{}".format(cid),label_visibility="visible")
+                        if nv!=done: L.toggle_checklist_personal(cid,nv); st.rerun()
+                    with c2:
+                        st.markdown('<div class="cl-delbtn">',unsafe_allow_html=True)
+                        confirm_del("clp_{}".format(cid),lambda c=cid:L.delete_checklist_personal(c),"🗑️")
+                        st.markdown('</div>',unsafe_allow_html=True)
+                else:
+                    st.markdown("<div style='font-size:12.5px;color:var(--txt3);padding-bottom:4px;'>{} {}</div>".format(
+                        "✅" if done else "⬜","Sudah siap" if done else "Belum siap"),unsafe_allow_html=True)
+                st.markdown("</div><div style='height:6px'></div>",unsafe_allow_html=True)
 
     if is_own:
         msep()
