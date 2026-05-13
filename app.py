@@ -253,6 +253,85 @@ div[data-testid="stCheckbox"]:has(input:checked) label p:first-child {
   opacity: .55 !important;
 }
 
+/* ─ Packing checklist card (enhanced) ─ */
+.cl-card-wrap {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  transition: border-color .15s, box-shadow .15s;
+}
+.cl-card-wrap:hover {
+  border-color: var(--border2);
+  box-shadow: 0 2px 10px rgba(0,0,0,.18);
+}
+.cl-card-done {
+  background: rgba(34,197,94,.05) !important;
+  border-color: rgba(34,197,94,.22) !important;
+}
+/* Strip native card from checkbox inside cl-card-wrap */
+.cl-card-wrap div[data-testid="stCheckbox"] {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 9px 4px 9px 12px !important;
+  margin: 0 !important;
+  width: 100% !important;
+}
+.cl-card-wrap div[data-testid="stCheckbox"]:hover {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.cl-card-wrap div[data-testid="stCheckbox"]:has(input:checked) {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+/* Zero-gap columns inside card wrap */
+.cl-card-wrap div[data-testid="stHorizontalBlock"] {
+  gap: 0 !important;
+  align-items: center !important;
+}
+/* Delete button inside card — ghost style */
+.cl-del-wrap { display:flex; align-items:center; justify-content:center; padding-right:6px; }
+.cl-del-wrap .stButton > button {
+  background: transparent !important;
+  border: none !important;
+  color: var(--txt3) !important;
+  padding: 5px 7px !important;
+  font-size: 13px !important;
+  border-radius: 6px !important;
+  min-height: 30px !important;
+  width: 30px !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: background .12s, color .12s !important;
+}
+.cl-del-wrap .stButton > button:hover {
+  background: rgba(239,68,68,.12) !important;
+  color: var(--red) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+/* Confirm-delete row inside card */
+.cl-del-wrap .stButton > button[kind="secondary"] {
+  font-size:11px !important; padding:4px 8px !important; width:auto !important; min-height:26px !important;
+}
+/* Source group header */
+.src-grp-hdr {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 0 7px; margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.src-grp-title { font-size:11px; font-weight:600; color:var(--txt2); }
+.src-grp-count {
+  margin-left: auto;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: var(--txt3);
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1px 7px;
+}
+
 /* ─ Item / checklist row (legacy) ─ */
 .irow{background:var(--raised);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:6px;transition:border-color .14s;}
 .irow:hover{border-color:var(--border2);}
@@ -2180,32 +2259,35 @@ def page_cl_group():
             grp=by_src.get(src,[])
             if not grp: continue
             lbl={"Biaya":"dari Input Biaya","Master":"dari Item Master","Manual":"Input Manual"}.get(src,src)
-            st.markdown("<div style='font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;padding:10px 0 5px;border-bottom:1px solid var(--border);margin-bottom:8px;'>{} {}</div>".format(badge(src,SRCCOL.get(src,"gray")),lbl),unsafe_allow_html=True)
+            st.markdown(
+                "<div class='src-grp-hdr'>{bdg}<span class='src-grp-title'>{lbl}</span>"
+                "<span class='src-grp-count'>{n}</span></div>".format(
+                    bdg=badge(src,SRCCOL.get(src,"gray")),lbl=lbl,n=len(grp)),
+                unsafe_allow_html=True)
             for cl in grp:
                 done=bool(cl["sudah_siap"]); dibawa=cl.get("dibawa_nama") or ""
                 lbl_col={"Wajib":"red","Disarankan":"orange","Opsional":"gray"}.get(cl["label"],"gray")
+                lbl_border={"Wajib":"#ef4444","Disarankan":"#f59e0b","Opsional":"#475569"}.get(cl["label"],"#243044")
                 nm=cl["nama_item"]; cid=cl["id"]
-                dibawa_txt="🎒 {}".format(dibawa) if dibawa else "⏳ belum assign"
+                dibawa_txt="🎒 {}".format(dibawa) if dibawa else "⏳ —"
                 ic=cl.get("icon","📦"); cat=cl.get("nama_kategori") or "—"
-                lbl_badge_html=badge(cl["label"],lbl_col)
-                # Render sebagai satu baris columns: [checkbox lebar | tombol hapus kecil]
+                done_cls=" cl-card-done" if done else ""
+                chk_label="**{nm}**  \n`{lb}` · {ic} {cat}  ·  {dh}".format(
+                    nm=nm,lb=cl["label"],ic=ic,cat=cat,dh=dibawa_txt)
+                st.markdown('<div class="cl-card-wrap{}" style="border-left:3px solid {}">'.format(done_cls,lbl_border),unsafe_allow_html=True)
                 if admin:
-                    col_chk, col_del = st.columns([9, 1])
+                    col_chk, col_del = st.columns([12, 1])
                     with col_chk:
-                        nv = st.checkbox(
-                            "{nm}  \n{lb} {ic} {cat}  ·  {dh}".format(
-                                nm=nm, lb=cl["label"], ic=ic, cat=cat, dh=dibawa_txt),
-                            value=done, key="clg_{}".format(cid))
+                        nv = st.checkbox(chk_label, value=done, key="clg_{}".format(cid))
                         if nv != done: L.toggle_checklist_group(cid, nv); st.rerun()
                     with col_del:
+                        st.markdown('<div class="cl-del-wrap">',unsafe_allow_html=True)
                         confirm_del("clg_{}".format(cid), lambda c=cid: L.delete_checklist_group(c), "🗑️", "Hapus {}?".format(nm))
+                        st.markdown('</div>',unsafe_allow_html=True)
                 else:
-                    nv = st.checkbox(
-                        "{nm}  \n{lb} {ic} {cat}  ·  {dh}".format(
-                            nm=nm, lb=cl["label"], ic=ic, cat=cat, dh=dibawa_txt),
-                        value=done, key="clg_{}".format(cid))
+                    nv = st.checkbox(chk_label, value=done, key="clg_{}".format(cid))
                     if nv != done: L.toggle_checklist_group(cid, nv); st.rerun()
-                st.markdown("<div style='height:2px'></div>", unsafe_allow_html=True)
+                st.markdown('</div>',unsafe_allow_html=True)
 
     if admin:
         msep()
@@ -2303,27 +2385,33 @@ def page_cl_personal():
         for src in ["Biaya","Master","Manual"]:
             grp=by_src.get(src,[])
             if not grp: continue
-            st.markdown("<div style='font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;padding:10px 0 5px;border-bottom:1px solid var(--border);margin-bottom:8px;'>{}</div>".format(badge(src,SRCCOL.get(src,"gray"))),unsafe_allow_html=True)
+            st.markdown(
+                "<div class='src-grp-hdr'>{bdg}<span class='src-grp-title'>{lbl}</span>"
+                "<span class='src-grp-count'>{n}</span></div>".format(
+                    bdg=badge(src,SRCCOL.get(src,"gray")),
+                    lbl={"Biaya":"dari Input Biaya","Master":"dari Item Master","Manual":"Input Manual"}.get(src,src),
+                    n=len(grp)),
+                unsafe_allow_html=True)
             for cl in grp:
                 done=bool(cl["sudah_siap"])
+                lbl_border={"Wajib":"#ef4444","Disarankan":"#f59e0b","Opsional":"#475569"}.get(cl["label"],"#243044")
                 nm=cl["nama_item"]; cid=cl["id"]
                 ic=cl.get("icon","📦"); cat=cl.get("nama_kategori") or "—"
+                done_cls=" cl-card-done" if done else ""
+                chk_label="**{nm}**  \n`{lb}` · {ic} {cat}".format(nm=nm,lb=cl["label"],ic=ic,cat=cat)
+                st.markdown('<div class="cl-card-wrap{}" style="border-left:3px solid {}">'.format(done_cls,lbl_border),unsafe_allow_html=True)
                 if is_own:
-                    col_chk, col_del = st.columns([9, 1])
+                    col_chk, col_del = st.columns([12, 1])
                     with col_chk:
-                        nv = st.checkbox(
-                            "{nm}  \n{lb} {ic} {cat}".format(
-                                nm=nm, lb=cl["label"], ic=ic, cat=cat),
-                            value=done, key="clp_{}".format(cid))
+                        nv = st.checkbox(chk_label, value=done, key="clp_{}".format(cid))
                         if nv != done: L.toggle_checklist_personal(cid, nv); st.rerun()
                     with col_del:
+                        st.markdown('<div class="cl-del-wrap">',unsafe_allow_html=True)
                         confirm_del("clp_{}".format(cid), lambda c=cid: L.delete_checklist_personal(c), "🗑️")
+                        st.markdown('</div>',unsafe_allow_html=True)
                 else:
-                    st.checkbox(
-                        "{nm}  \n{lb} {ic} {cat}".format(
-                            nm=nm, lb=cl["label"], ic=ic, cat=cat),
-                        value=done, key="clp_{}".format(cid), disabled=True)
-                st.markdown("<div style='height:2px'></div>", unsafe_allow_html=True)
+                    st.checkbox(chk_label, value=done, key="clp_{}".format(cid), disabled=True)
+                st.markdown('</div>',unsafe_allow_html=True)
 
     if is_own:
         msep()
