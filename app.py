@@ -212,151 +212,178 @@ p,div{font-family:'Plus Jakarta Sans',sans-serif!important;}
 .rekap-tbl .row-neg td{color:var(--green);font-weight:700;font-family:'IBM Plex Mono',monospace;}
 
 /* ═══════════════════════════════════════════════════════════════════════
-   PACKING CHECKLIST CARD
-   Pendekatan: style langsung stHorizontalBlock dari st.columns() sebagai card.
-   Tidak ada div wrapper — Streamlit sendiri yang jadi container kartunya.
-   1 baris = [checkbox+info] [hapus], full width, works on mobile too.
+   PACKING CHECKLIST ROW — 3 KOLOM: [☐] [nama+info] [🗑️]
+   CSS menarget stHorizontalBlock yang Streamlit buat dari st.columns().
+   Tidak ada HTML wrapper div — Streamlit's own HorizontalBlock = kartu.
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* Tandai container item checklist dengan class .cl-item */
-div.cl-item > div[data-testid="stHorizontalBlock"] {
+/* Setiap stHorizontalBlock di dalam .cl-row = kartu penuh */
+div.cl-row [data-testid="stHorizontalBlock"] {
   background: var(--raised) !important;
   border: 1px solid var(--border) !important;
-  border-left: 3px solid var(--cl-border, var(--border2)) !important;
   border-radius: 12px !important;
   margin-bottom: 7px !important;
   padding: 0 !important;
   gap: 0 !important;
-  align-items: center !important;
+  align-items: stretch !important;
   flex-wrap: nowrap !important;
   overflow: hidden !important;
   transition: border-color .15s, box-shadow .15s !important;
-  min-height: 64px !important;
+  min-height: 60px !important;
   width: 100% !important;
 }
-div.cl-item > div[data-testid="stHorizontalBlock"]:hover {
+div.cl-row [data-testid="stHorizontalBlock"]:hover {
   border-color: var(--border2) !important;
-  box-shadow: 0 4px 18px rgba(0,0,0,.28) !important;
-}
-/* Done/checked state card background */
-div.cl-item.cl-done > div[data-testid="stHorizontalBlock"] {
-  background: rgba(34,197,94,.06) !important;
-  border-color: rgba(34,197,94,.28) !important;
+  box-shadow: 0 4px 18px rgba(0,0,0,.3) !important;
 }
 
-/* Kolom checkbox: flex grow, min-width 0 agar tidak overflow */
-div.cl-item > div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
+/* Kill semua padding/margin Streamlit wrapper di dalam row */
+div.cl-row [data-testid="stHorizontalBlock"] > div[data-testid="column"] {
   padding: 0 !important;
+  gap: 0 !important;
 }
-/* Kolom tombol hapus: shrink ke content saja */
-div.cl-item > div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
-  flex: 0 0 auto !important;
-  width: auto !important;
-  min-width: 0 !important;
-  padding: 0 14px 0 8px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* Kill default Streamlit vertical wrapper padding di dalam kolom */
-div.cl-item div[data-testid="stVerticalBlock"],
-div.cl-item div[data-testid="stVerticalBlockBorderWrapper"] {
+div.cl-row div[data-testid="stVerticalBlock"],
+div.cl-row div[data-testid="stVerticalBlockBorderWrapper"] {
   padding: 0 !important;
   gap: 0 !important;
   background: transparent !important;
   border: none !important;
 }
 
-/* Checkbox: no background/border (kartu sudah dari HorizontalBlock) */
-div.cl-item div[data-testid="stCheckbox"] {
+/* Kolom 1: checkbox — lebar fixed kecil, center vertikal */
+div.cl-row [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) {
+  flex: 0 0 48px !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-right: 1px solid var(--border) !important;
+}
+
+/* Kolom 2: info item — flex grow, padding normal */
+div.cl-row [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  padding: 13px 14px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Kolom 3: tombol hapus — shrink ke content */
+div.cl-row [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(3) {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  padding: 0 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-left: 1px solid var(--border) !important;
+}
+
+/* Checkbox: hanya kotak centang, no background/border */
+div.cl-row div[data-testid="stCheckbox"] {
   background: transparent !important;
   border: none !important;
   border-radius: 0 !important;
-  padding: 14px 12px 14px 16px !important;
+  padding: 0 !important;
   margin: 0 !important;
   width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
-div.cl-item div[data-testid="stCheckbox"]:hover {
-  box-shadow: none !important;
-  border-color: transparent !important;
+div.cl-row div[data-testid="stCheckbox"]:hover { box-shadow: none !important; border-color: transparent !important; }
+/* Sembunyikan label teks checkbox (info ditampilkan di kolom 2 via HTML) */
+div.cl-row div[data-testid="stCheckbox"] label span[data-testid="stMarkdownContainer"],
+div.cl-row div[data-testid="stCheckbox"] label p { display: none !important; }
+/* Checkbox hanya tampilkan kotak tick */
+div.cl-row div[data-testid="stCheckbox"] label {
+  width: auto !important; margin: 0 !important;
+}
+div.cl-row div[data-testid="stCheckbox"] input[type="checkbox"] {
+  width: 18px !important; height: 18px !important;
 }
 
-/* Nama item: besar, terang */
-div.cl-item div[data-testid="stCheckbox"] label {
-  color: #e2eaf5 !important;
-  cursor: pointer !important;
-  width: 100% !important;
+/* Info HTML di kolom 2 */
+div.cl-row .cl-info {
+  width: 100%;
 }
-div.cl-item div[data-testid="stCheckbox"] label > div {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 3px !important;
-}
-div.cl-item div[data-testid="stCheckbox"] label p:first-child {
+div.cl-row .cl-info .cl-name {
   font-size: 15px !important;
   font-weight: 700 !important;
   color: #e2eaf5 !important;
   letter-spacing: -.02em !important;
-  margin: 0 !important;
   line-height: 1.3 !important;
+  margin-bottom: 5px !important;
 }
-/* Meta baris: label · kategori · assign — jelas terbaca */
-div.cl-item div[data-testid="stCheckbox"] label p:last-child {
+div.cl-row .cl-info .cl-meta {
   font-size: 12px !important;
   color: #8aa0c0 !important;
   font-weight: 500 !important;
-  margin: 0 !important;
-  line-height: 1.6 !important;
+  line-height: 1.5 !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 4px 8px !important;
+  align-items: center !important;
 }
+/* Label badge warna */
+div.cl-row .cl-lbl {
+  font-size: 10.5px !important;
+  font-weight: 800 !important;
+  padding: 2px 7px !important;
+  border-radius: 20px !important;
+  letter-spacing: .02em !important;
+}
+.cl-lbl-wajib   { background: rgba(239,68,68,.15); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+.cl-lbl-sarankan{ background: rgba(245,158,11,.15); color: #fcd34d; border: 1px solid rgba(245,158,11,.3); }
+.cl-lbl-opsional{ background: rgba(100,116,139,.15); color: #94a3b8; border: 1px solid rgba(100,116,139,.3); }
 
-/* Checked: coret nama, redup seluruh teks */
-div.cl-item div[data-testid="stCheckbox"]:has(input:checked) label p:first-child {
-  text-decoration: line-through !important;
-  opacity: .4 !important;
-  color: #8aa0c0 !important;
+/* Done state: redup + nama dicoret */
+div.cl-row.cl-done [data-testid="stHorizontalBlock"] {
+  background: rgba(34,197,94,.05) !important;
+  border-color: rgba(34,197,94,.22) !important;
 }
-div.cl-item div[data-testid="stCheckbox"]:has(input:checked) label p:last-child {
-  opacity: .35 !important;
-}
+div.cl-row.cl-done .cl-name { text-decoration: line-through !important; opacity: .45 !important; }
+div.cl-row.cl-done .cl-meta { opacity: .4 !important; }
 
 /* Tombol hapus: ghost merah kecil */
-div.cl-item .stButton > button {
+div.cl-row .stButton > button {
   background: transparent !important;
-  border: 1px solid rgba(239,68,68,.3) !important;
+  border: 1px solid rgba(239,68,68,.28) !important;
   color: #f87171 !important;
-  font-size: 12px !important;
+  font-size: 13px !important;
   font-weight: 700 !important;
-  padding: 5px 11px !important;
-  min-height: 30px !important;
-  height: 30px !important;
-  border-radius: 7px !important;
+  padding: 0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  border-radius: 8px !important;
   box-shadow: none !important;
   transform: none !important;
   line-height: 1 !important;
-  white-space: nowrap !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   transition: background .12s, border-color .12s !important;
 }
-div.cl-item .stButton > button:hover {
+div.cl-row .stButton > button:hover {
   background: rgba(239,68,68,.15) !important;
   border-color: rgba(239,68,68,.6) !important;
   color: #fca5a5 !important;
   transform: none !important;
   box-shadow: none !important;
 }
-/* Confirm text & confirm buttons */
-div.cl-item [data-testid="stText"] p,
-div.cl-item p { font-size: 11px !important; color: #fca5a5 !important; margin: 0 !important; }
-div.cl-item .btn-danger > button {
-  padding: 4px 10px !important; height: 26px !important; min-height: 26px !important; font-size: 11px !important;
-}
-div.cl-item .btn-gray > button {
-  padding: 4px 10px !important; height: 26px !important; min-height: 26px !important; font-size: 11px !important;
-}
+/* Confirm dialog */
+div.cl-row [data-testid="stText"] p,
+div.cl-row .cl-row-confirm p { font-size: 10px !important; color: #fca5a5 !important; margin: 0 !important; white-space: nowrap !important; }
+div.cl-row .btn-danger > button { padding: 3px 8px !important; height: 24px !important; min-height: 24px !important; font-size: 10px !important; width: auto !important; }
+div.cl-row .btn-gray > button   { padding: 3px 8px !important; height: 24px !important; min-height: 24px !important; font-size: 10px !important; width: auto !important; }
 
-/* Default checkbox di luar card — tetap styled normal */
+/* Default checkbox di luar card — tetap normal */
 div[data-testid="stCheckbox"] {
   background: var(--raised) !important;
   border: 1px solid var(--border) !important;
@@ -385,7 +412,7 @@ div[data-testid="stCheckbox"]:has(input:checked) label p:first-child {
   text-decoration: line-through !important; opacity: .55 !important;
 }
 
-/* ── Source group header ── */
+/* Source group header */
 .src-grp-hdr {
   display: flex; align-items: center; gap: 10px;
   padding: 14px 0 8px; margin-bottom: 6px;
@@ -393,43 +420,33 @@ div[data-testid="stCheckbox"]:has(input:checked) label p:first-child {
 }
 .src-grp-title { font-size: 12px; font-weight: 600; color: var(--txt2); }
 .src-grp-count {
-  margin-left: auto;
-  font-family: 'IBM Plex Mono', monospace;
+  margin-left: auto; font-family: 'IBM Plex Mono', monospace;
   font-size: 10px; color: var(--txt3);
   background: var(--card); border: 1px solid var(--border);
   border-radius: 10px; padding: 2px 8px;
 }
 
-/* ─ Item / checklist row (legacy) ─ */
-.irow{background:var(--raised);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:6px;transition:border-color .14s;}
-.irow:hover{border-color:var(--border2);}
-.cl-done{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.3)!important;}
-
-/* ─ Scrollbar ─ */
-::-webkit-scrollbar{width:5px;height:5px;}
-::-webkit-scrollbar-track{background:var(--bg);}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
-::-webkit-scrollbar-thumb:hover{background:var(--border2);}
-
-/* ─ Animation ─ */
-@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-
-/* ─ Item / checklist row (legacy) ─ */
-.irow{background:var(--raised);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:6px;transition:border-color .14s;}
-.irow:hover{border-color:var(--border2);}
-
-/* ─ Mobile ─ */
+/* Mobile */
 @media(max-width:768px){
   .pw{padding:14px 10px 40px;}
   .page-title{font-size:18px!important;}
   .stTabs [data-baseweb="tab"]{font-size:11px!important;padding:8px 10px!important;}
-  div.cl-item > div[data-testid="stHorizontalBlock"] { flex-wrap:nowrap !important; min-height:56px !important; }
-  div.cl-item div[data-testid="stCheckbox"] { padding:10px 8px 10px 12px !important; }
-  div.cl-item div[data-testid="stCheckbox"] label p:first-child { font-size:13px !important; }
-  div.cl-item div[data-testid="stCheckbox"] label p:last-child { font-size:11px !important; }
-  div.cl-item > div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child { padding: 0 8px 0 4px !important; }
-  div.cl-item .stButton > button { padding:4px 8px !important; font-size:11px !important; height:28px !important; min-height:28px !important; }
+  div.cl-row [data-testid="stHorizontalBlock"] { flex-wrap:nowrap !important; min-height:54px !important; }
+  div.cl-row [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) { flex:0 0 40px !important; min-width:40px !important; width:40px !important; }
+  div.cl-row [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) { padding:10px !important; }
+  div.cl-row .cl-info .cl-name { font-size:13px !important; }
+  div.cl-row .cl-info .cl-meta { font-size:11px !important; }
+  div.cl-row .stButton > button { width:28px !important; height:28px !important; font-size:12px !important; }
 }
+
+/* Legacy */
+.irow{background:var(--raised);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:6px;transition:border-color .14s;}
+.irow:hover{border-color:var(--border2);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--border2);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -2353,32 +2370,32 @@ def page_cl_group():
                 dibawa_txt="🎒 {}".format(dibawa) if dibawa else "⏳ —"
                 ic=cl.get("icon","📦"); cat=cl.get("nama_kategori") or "—"
                 catatan=cl.get("catatan") or ""
-                lbl_color={"Wajib":"#fca5a5","Disarankan":"#fcd34d","Opsional":"#94a3b8"}.get(cl["label"],"#8aa0c0")
-                # Baris meta: label · kategori · pembawa · catatan
-                meta_parts=[
-                    "<span style='color:{};font-weight:700;font-size:11px;'>{}</span>".format(lbl_color,cl["label"]),
-                    "{} {}".format(ic,cat),
-                    dibawa_txt,
-                ]
-                if catatan: meta_parts.append("💬 {}".format(catatan))
-                meta_html=" &nbsp;·&nbsp; ".join(meta_parts)
-                done_cls=" cl-done" if done else ""
-                # Inject class cl-item sebagai anchor CSS; st.columns() akan jadi cardnya
-                st.markdown(
-                    '<div class="cl-item{}" style="--cl-border:{}">'.format(done_cls, lbl_border),
-                    unsafe_allow_html=True)
+                lbl_cls={"Wajib":"cl-lbl-wajib","Disarankan":"cl-lbl-sarankan","Opsional":"cl-lbl-opsional"}.get(cl["label"],"cl-lbl-opsional")
+                done_row=" cl-done" if done else ""
+                # Baris meta
+                meta = '<span class="cl-lbl {}">{}</span> &nbsp;·&nbsp; {} {} &nbsp;·&nbsp; {}'.format(
+                    lbl_cls, cl["label"], ic, cat, dibawa_txt)
+                if catatan: meta += " &nbsp;·&nbsp; 💬 {}".format(catatan)
+                info_html = (
+                    '<div class="cl-info">'
+                    '<div class="cl-name{}">{}</div>'
+                    '<div class="cl-meta">{}</div>'
+                    '</div>'
+                ).format(" cl-done-name" if done else "", nm, meta)
+                # Marker div + border kiri warna label
+                st.markdown('<div class="cl-row{}" style="--cl-b:{}">'.format(done_row, lbl_border), unsafe_allow_html=True)
                 if admin:
-                    col_chk, col_del = st.columns([1, 0.11])
+                    c_chk, c_info, c_del = st.columns([0.06, 1, 0.1])
                 else:
-                    col_chk = st.columns([1])[0]
-                    col_del = None
-                with col_chk:
-                    chk_label = "**{}**  \n{}".format(nm, meta_html)
-                    nv = st.checkbox(chk_label, value=done, key="clg_{}".format(cid))
+                    c_chk, c_info = st.columns([0.06, 1]); c_del = None
+                with c_chk:
+                    nv = st.checkbox("", value=done, key="clg_{}".format(cid))
                     if nv != done: L.toggle_checklist_group(cid, nv); st.rerun()
-                if col_del is not None:
-                    with col_del:
-                        confirm_del("clg_{}".format(cid), lambda c=cid: L.delete_checklist_group(c), "🗑️", "Hapus {}?".format(nm))
+                with c_info:
+                    st.markdown(info_html, unsafe_allow_html=True)
+                if c_del:
+                    with c_del:
+                        confirm_del("clg_{}".format(cid), lambda c=cid: L.delete_checklist_group(c), "🗑️", "Hapus?")
                 st.markdown('</div>', unsafe_allow_html=True)
 
     if admin:
@@ -2490,30 +2507,33 @@ def page_cl_personal():
                 nm=cl["nama_item"]; cid=cl["id"]
                 ic=cl.get("icon","📦"); cat=cl.get("nama_kategori") or "—"
                 catatan=cl.get("catatan") or ""
-                lbl_color={"Wajib":"#fca5a5","Disarankan":"#fcd34d","Opsional":"#94a3b8"}.get(cl["label"],"#8aa0c0")
-                meta_parts=[
-                    "<span style='color:{};font-weight:700;font-size:11px;'>{}</span>".format(lbl_color,cl["label"]),
-                    "{} {}".format(ic,cat),
-                ]
-                if catatan: meta_parts.append("💬 {}".format(catatan))
-                meta_html=" &nbsp;·&nbsp; ".join(meta_parts)
-                done_cls=" cl-done" if done else ""
-                st.markdown(
-                    '<div class="cl-item{}" style="--cl-border:{}">'.format(done_cls, lbl_border),
-                    unsafe_allow_html=True)
+                lbl_cls={"Wajib":"cl-lbl-wajib","Disarankan":"cl-lbl-sarankan","Opsional":"cl-lbl-opsional"}.get(cl["label"],"cl-lbl-opsional")
+                done_row=" cl-done" if done else ""
+                meta = '<span class="cl-lbl {}">{}</span> &nbsp;·&nbsp; {} {}'.format(
+                    lbl_cls, cl["label"], ic, cat)
+                if catatan: meta += " &nbsp;·&nbsp; 💬 {}".format(catatan)
+                info_html = (
+                    '<div class="cl-info">'
+                    '<div class="cl-name{}">{}</div>'
+                    '<div class="cl-meta">{}</div>'
+                    '</div>'
+                ).format(" cl-done-name" if done else "", nm, meta)
+                st.markdown('<div class="cl-row{}" style="--cl-b:{}">'.format(done_row, lbl_border), unsafe_allow_html=True)
                 if is_own:
-                    col_chk, col_del = st.columns([1, 0.11])
-                    with col_chk:
-                        chk_label = "**{}**  \n{}".format(nm, meta_html)
-                        nv = st.checkbox(chk_label, value=done, key="clp_{}".format(cid))
+                    c_chk, c_info, c_del = st.columns([0.06, 1, 0.1])
+                    with c_chk:
+                        nv = st.checkbox("", value=done, key="clp_{}".format(cid))
                         if nv != done: L.toggle_checklist_personal(cid, nv); st.rerun()
-                    with col_del:
-                        confirm_del("clp_{}".format(cid), lambda c=cid: L.delete_checklist_personal(c), "🗑️", "Hapus {}?".format(nm))
+                    with c_info:
+                        st.markdown(info_html, unsafe_allow_html=True)
+                    with c_del:
+                        confirm_del("clp_{}".format(cid), lambda c=cid: L.delete_checklist_personal(c), "🗑️", "Hapus?")
                 else:
-                    col_chk = st.columns([1])[0]
-                    with col_chk:
-                        chk_label = "**{}**  \n{}".format(nm, meta_html)
-                        st.checkbox(chk_label, value=done, key="clp_{}".format(cid), disabled=True)
+                    c_chk, c_info = st.columns([0.06, 1])
+                    with c_chk:
+                        st.checkbox("", value=done, key="clp_{}".format(cid), disabled=True)
+                    with c_info:
+                        st.markdown(info_html, unsafe_allow_html=True)
                 st.markdown('</div>', unsafe_allow_html=True)
 
     if is_own:
