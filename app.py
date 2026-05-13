@@ -1975,17 +1975,22 @@ def page_payments():
                 st2="✅ Lunas" if sisa<=0 else "Sisa {}".format(L.fmt_rp(sisa))
             else: pct=100; sc="#06b6d4"; st2="💚 Piutang {}".format(L.fmt_rp(sisa_tanggungan_m))
             mng_str=" · Menanggung (orang lain): <b style='color:var(--orange);'>{}</b>".format(L.fmt_rp(max(0,mng-tag))) if mng>0 else ""
+            # Hitung uang lebih
+            lebih_m=max(0,terbayar_m-max(0,net)) if net>0 else 0
+            lebih_str_s=""
+            if lebih_m>0:
+                lebih_str_s=" · <b style='color:var(--teal);'>Lebih: {}</b>".format(L.fmt_rp(lebih_m))
             st.markdown("""
 <div class='card'>
   <div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;'>
     <div>
       <div style='font-size:13px;font-weight:700;color:var(--txt);'>👤 {nm}</div>
-      <div style='font-size:11px;color:var(--txt3);font-family:IBM Plex Mono,monospace;margin-top:3px;'>Tagihan: {tag}{mng} · Terbayar: <b style='color:var(--accent2);'>{paid}</b></div>
+      <div style='font-size:11px;color:var(--txt3);font-family:IBM Plex Mono,monospace;margin-top:3px;'>Tagihan: {tag}{mng} · Terbayar: <b style='color:var(--accent2);'>{paid}</b>{lebih}</div>
     </div>
     <div style='font-size:13px;font-weight:700;color:{sc};'>{st2}</div>
   </div>
   <div class='prog' style='margin-top:8px;'><div class='prog-fill' style='width:{pct}%;background:{sc};'></div></div>
-</div>""".format(nm=m["nama_lengkap"],tag=L.fmt_rp(tag),mng=mng_str,paid=L.fmt_rp(terbayar_m),sc=sc,st2=st2,pct=pct),unsafe_allow_html=True)
+</div>""".format(nm=m["nama_lengkap"],tag=L.fmt_rp(tag),mng=mng_str,paid=L.fmt_rp(terbayar_m),lebih=lebih_str_s,sc=sc,st2=st2,pct=pct),unsafe_allow_html=True)
 
     with tabs[1]:
         if not admin: alert("Pencatatan pembayaran hanya admin.","warning")
@@ -2018,21 +2023,30 @@ def page_payments():
         payments=L.get_payments(trip_id)
         if not payments: alert("Belum ada pembayaran.","info")
         else:
-            total_p2=sum(float(p["jumlah"]) for p in payments)
+            total_p2=sum(float(p.get("jumlah_dibayar") or p.get("jumlah") or 0) for p in payments)
             st.metric("Total Terbayar",L.fmt_rp(total_p2))
-            for p in sorted(payments,key=lambda x:x["tanggal"],reverse=True):
-                tgl_f=p["tanggal"].strftime("%d %b %Y") if hasattr(p["tanggal"],"strftime") else str(p["tanggal"])
+            for p in sorted(payments,key=lambda x:x.get("tanggal_bayar") or x.get("tanggal",""),reverse=True):
+                tgl_raw=p.get("tanggal_bayar") or p.get("tanggal","")
+                tgl_f=tgl_raw.strftime("%d %b %Y") if hasattr(tgl_raw,"strftime") else str(tgl_raw)
+                jml_p=float(p.get("jumlah_dibayar") or p.get("jumlah") or 0)
+                net_m2=net_tagihan.get(p.get("member_id"),0)
+                paid_so_far=paid_all.get(p.get("member_id"),0)
+                # cek apakah ada uang lebih (total bayar melebihi net tagihan)
+                lebih_str=""
+                if net_m2>0 and paid_so_far>net_m2:
+                    lebih=paid_so_far-net_m2
+                    lebih_str="<span style='background:rgba(6,182,212,.15);color:#67e8f9;border:1px solid rgba(6,182,212,.3);padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;margin-left:8px;'>💰 Lebih {}</span>".format(L.fmt_rp(lebih))
                 st.markdown("""
 <div class='card card-green' style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;'>
   <div>
-    <div style='font-size:13px;font-weight:700;color:var(--txt);'>👤 {nm}</div>
+    <div style='font-size:13px;font-weight:700;color:var(--txt);'>👤 {nm}{lebih}</div>
     <div style='font-size:11px;color:var(--txt3);margin-top:2px;'>📅 {tgl} · 💳 {mt}{ct}</div>
   </div>
   <div style='font-size:20px;font-weight:700;color:var(--green);font-family:IBM Plex Mono,monospace;'>{jml}</div>
-</div>""".format(nm=p.get("nama_lengkap",p.get("member_id","")),
-                 tgl=tgl_f,mt=p.get("metode","Transfer"),
-                 ct=" · "+p["catatan"] if p.get("catatan") else "",
-                 jml=L.fmt_rp(p["jumlah"])),unsafe_allow_html=True)
+</div>""".format(nm=p.get("nama_lengkap",p.get("member_id","")),lebih=lebih_str,
+                 tgl=tgl_f,mt=p.get("metode_bayar") or p.get("metode","Transfer"),
+                 ct=" · "+p["keterangan"] if p.get("keterangan") else ("· "+p["catatan"] if p.get("catatan") else ""),
+                 jml=L.fmt_rp(jml_p)),unsafe_allow_html=True)
 
     with tabs[3]:
         sec("🏦 Rekening Transfer")
@@ -2133,28 +2147,36 @@ def page_cl_group():
                 bl="var(--green)" if done else "var(--border2)"
                 op="opacity:.55;" if done else ""
                 sth="text-decoration:line-through;" if done else ""
-                # Member tidak bisa hapus, hanya centang
-                if admin:
-                    c_chk,c_info,c_del=st.columns([1,9,1])
-                else:
+                # Mobile-friendly: stack vertically, no side columns
+                with st.container():
+                    # Info row
+                    done=bool(cl["sudah_siap"]); dibawa=cl.get("dibawa_nama") or ""
+                    lbl_col={"Wajib":"red","Disarankan":"orange","Opsional":"gray"}.get(cl["label"],"gray")
+                    bg="rgba(34,197,94,.06)" if done else "var(--raised)"
+                    bd="rgba(34,197,94,.4)" if done else "var(--border)"
+                    bl="var(--green)" if done else "var(--border2)"
+                    op="opacity:.55;" if done else ""
+                    sth="text-decoration:line-through;" if done else ""
+                    # Checkbox + info in single row, delete below on mobile
                     c_chk,c_info=st.columns([1,10])
-                    c_del=None
-                with c_chk:
-                    st.markdown("<div style='padding-top:6px;'>",unsafe_allow_html=True)
-                    nv=st.checkbox("",value=done,key="clg_{}".format(cl["id"]),label_visibility="collapsed")
-                    if nv!=done: L.toggle_checklist_group(cl["id"],nv); st.rerun()
-                    st.markdown("</div>",unsafe_allow_html=True)
-                with c_info:
-                    st.markdown("<div style='background:{bg};border:1px solid {bd};border-left:3px solid {bl};border-radius:10px;padding:9px 14px;{op}{sth}'><div style='font-size:13.5px;font-weight:700;color:var(--txt);line-height:1.3;'>{nm}</div><div style='display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;'>{lb}<span style='font-size:11px;color:var(--txt3);'>{ic} {cat}</span><span style='font-size:11px;color:{dc};'>· {dh}</span></div></div>".format(
-                        bg=bg,bd=bd,bl=bl,op=op,sth=sth,nm=cl["nama_item"],lb=badge(cl["label"],lbl_col),
-                        ic=cl.get("icon","📦"),cat=cl.get("nama_kategori") or "—",
-                        dc="var(--teal)" if dibawa else "var(--txt3)",
-                        dh="🎒 {}".format(dibawa) if dibawa else "⏳ belum assign"),unsafe_allow_html=True)
-                if c_del is not None:
-                    with c_del:
+                    with c_chk:
                         st.markdown("<div style='padding-top:6px;'>",unsafe_allow_html=True)
-                        confirm_del("clg_{}".format(cl["id"]),lambda cid=cl["id"]:L.delete_checklist_group(cid),"🗑️","Hapus {}?".format(cl["nama_item"]))
+                        nv=st.checkbox("",value=done,key="clg_{}".format(cl["id"]),label_visibility="collapsed")
+                        if nv!=done: L.toggle_checklist_group(cl["id"],nv); st.rerun()
                         st.markdown("</div>",unsafe_allow_html=True)
+                    with c_info:
+                        st.markdown("<div style='background:{bg};border:1px solid {bd};border-left:3px solid {bl};border-radius:10px;padding:9px 14px;{op}'><div style='font-size:13.5px;font-weight:700;color:var(--txt);line-height:1.3;{sth}'>{nm}</div><div style='display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;'>{lb}<span style='font-size:11px;color:var(--txt3);'>{ic} {cat}</span><span style='font-size:11px;color:{dc};'>· {dh}</span></div></div>".format(
+                            bg=bg,bd=bd,bl=bl,op=op,sth=sth,nm=cl["nama_item"],lb=badge(cl["label"],lbl_col),
+                            ic=cl.get("icon","📦"),cat=cl.get("nama_kategori") or "—",
+                            dc="var(--teal)" if dibawa else "var(--txt3)",
+                            dh="🎒 {}".format(dibawa) if dibawa else "⏳ belum assign"),unsafe_allow_html=True)
+                    if admin:
+                        _,c_del=st.columns([10,1])
+                        with c_del:
+                            st.markdown("<div style='padding-bottom:4px;'>",unsafe_allow_html=True)
+                            confirm_del("clg_{}".format(cl["id"]),lambda cid=cl["id"]:L.delete_checklist_group(cid),"🗑️","Hapus {}?".format(cl["nama_item"]))
+                            st.markdown("</div>",unsafe_allow_html=True)
+                    st.markdown("<div style='height:4px'></div>",unsafe_allow_html=True)
 
     if admin:
         msep()
@@ -2252,28 +2274,30 @@ def page_cl_personal():
                 done=bool(cl["sudah_siap"]); lbl_col={"Wajib":"red","Disarankan":"orange","Opsional":"gray"}.get(cl["label"],"gray")
                 bg="rgba(34,197,94,.06)" if done else "var(--raised)"; bd="rgba(34,197,94,.4)" if done else "var(--border)"
                 bl="var(--green)" if done else "var(--border2)"; op="opacity:.55;" if done else ""; sth="text-decoration:line-through;" if done else ""
-                if is_own:
-                    c_chk,c_info,c_del=st.columns([1,9,1])
-                else:
-                    c_chk,c_info=st.columns([1,10]); c_del=None
-                with c_chk:
-                    st.markdown("<div style='padding-top:6px;'>",unsafe_allow_html=True)
-                    if is_own:
-                        nv=st.checkbox("",value=done,key="clp_{}".format(cl["id"]),label_visibility="collapsed")
-                        if nv!=done: L.toggle_checklist_personal(cl["id"],nv); st.rerun()
-                    else:
-                        # View-only: show read-only indicator
-                        st.markdown("<span style='font-size:16px;'>{}</span>".format("✅" if done else "⬜"),unsafe_allow_html=True)
-                    st.markdown("</div>",unsafe_allow_html=True)
-                with c_info:
-                    st.markdown("<div style='background:{bg};border:1px solid {bd};border-left:3px solid {bl};border-radius:10px;padding:9px 14px;{op}{sth}'><div style='font-size:13.5px;font-weight:700;color:var(--txt);'>{nm}</div><div style='display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;'>{lb}<span style='font-size:11px;color:var(--txt3);'>{ic} {cat}</span></div></div>".format(
-                        bg=bg,bd=bd,bl=bl,op=op,sth=sth,nm=cl["nama_item"],lb=badge(cl["label"],lbl_col),
-                        ic=cl.get("icon","📦"),cat=cl.get("nama_kategori") or "—"),unsafe_allow_html=True)
-                if c_del is not None:
-                    with c_del:
+                with st.container():
+                    done=bool(cl["sudah_siap"]); lbl_col={"Wajib":"red","Disarankan":"orange","Opsional":"gray"}.get(cl["label"],"gray")
+                    bg="rgba(34,197,94,.06)" if done else "var(--raised)"; bd="rgba(34,197,94,.4)" if done else "var(--border)"
+                    bl="var(--green)" if done else "var(--border2)"; op="opacity:.55;" if done else ""; sth="text-decoration:line-through;" if done else ""
+                    c_chk,c_info=st.columns([1,10])
+                    with c_chk:
                         st.markdown("<div style='padding-top:6px;'>",unsafe_allow_html=True)
-                        confirm_del("clp_{}".format(cl["id"]),lambda cid=cl["id"]:L.delete_checklist_personal(cid),"🗑️")
+                        if is_own:
+                            nv=st.checkbox("",value=done,key="clp_{}".format(cl["id"]),label_visibility="collapsed")
+                            if nv!=done: L.toggle_checklist_personal(cl["id"],nv); st.rerun()
+                        else:
+                            st.markdown("<span style='font-size:16px;'>{}</span>".format("✅" if done else "⬜"),unsafe_allow_html=True)
                         st.markdown("</div>",unsafe_allow_html=True)
+                    with c_info:
+                        st.markdown("<div style='background:{bg};border:1px solid {bd};border-left:3px solid {bl};border-radius:10px;padding:9px 14px;{op}'><div style='font-size:13.5px;font-weight:700;color:var(--txt);{sth}'>{nm}</div><div style='display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;'>{lb}<span style='font-size:11px;color:var(--txt3);'>{ic} {cat}</span></div></div>".format(
+                            bg=bg,bd=bd,bl=bl,op=op,sth=sth,nm=cl["nama_item"],lb=badge(cl["label"],lbl_col),
+                            ic=cl.get("icon","📦"),cat=cl.get("nama_kategori") or "—"),unsafe_allow_html=True)
+                    if is_own:
+                        _,c_del=st.columns([10,1])
+                        with c_del:
+                            st.markdown("<div style='padding-bottom:4px;'>",unsafe_allow_html=True)
+                            confirm_del("clp_{}".format(cl["id"]),lambda cid=cl["id"]:L.delete_checklist_personal(cid),"🗑️")
+                            st.markdown("</div>",unsafe_allow_html=True)
+                    st.markdown("<div style='height:4px'></div>",unsafe_allow_html=True)
 
     if is_own:
         msep()
@@ -2976,21 +3000,27 @@ def page_exercises():
             if otot:
                 otot_row="<div style='margin-top:10px;font-size:11px;color:#4a6080;'><span style='color:#3b82f650;'>▸</span> 💪 Otot: <span style='color:#6b8ab0;'>{}</span></div>".format(otot)
 
-            # Preview bar (visible before dropdown opened)
+            # Container per exercise dengan border dan margin bawah yang jelas
             fokus_chip=""
             if ex.get("fokus"):
                 fokus_chip="<span style='background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);border-radius:20px;padding:2px 10px;font-size:11px;color:#3b82f6;font-weight:600;'>🎯 {}</span>".format(ex["fokus"])
             alat_chip=""
             if alat!="Tanpa Alat":
                 alat_chip="<span style='background:#1c2638;border:1px solid #2e3f58;border-radius:20px;padding:2px 10px;font-size:11px;color:#4a6080;'>🔧 {}</span>".format(alat)
+
+            # Wrap expander in a styled container for spacing
+            st.markdown("""<div style='background:var(--card);border:1px solid var(--border);
+                border-radius:12px;margin-bottom:10px;overflow:hidden;'>""", unsafe_allow_html=True)
+
+            # Badge row INSIDE the card, above the expander
             st.markdown("""<div style='display:flex;align-items:center;gap:8px;
-                padding:0 16px 6px;margin-top:-8px;flex-wrap:wrap;'>
+                padding:10px 16px 0;flex-wrap:wrap;'>
                 <span style='background:{bg};border:1px solid {col}44;border-radius:20px;
-                  padding:2px 10px;font-size:11px;font-weight:700;color:{col};'>{lvl}</span>
+                  padding:3px 12px;font-size:11px;font-weight:700;color:{col};'>{lvl}</span>
                 <span style='background:rgba(100,116,139,.08);border:1px solid #2e3f58;border-radius:20px;
-                  padding:2px 10px;font-size:11px;color:#64748b;'>⏱ {dur} mnt</span>
+                  padding:3px 12px;font-size:11px;color:#64748b;'>⏱ {dur} mnt</span>
                 <span style='background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:20px;
-                  padding:2px 10px;font-size:11px;color:#f87171;'>🔥 {kal} kal</span>
+                  padding:3px 12px;font-size:11px;color:#f87171;'>🔥 {kal} kal</span>
                 {fokus}{alat}
                 </div>""".format(
                 bg=lvl_bg,col=lvl_c,lvl=ex["level"],
@@ -3095,6 +3125,9 @@ def page_exercises():
                             if st.form_submit_button("🗑️ Hapus",use_container_width=True):
                                 L.delete_exercise(ex["id"]); st.rerun()
                             st.markdown('</div>',unsafe_allow_html=True)
+
+            # Close exercise card container
+            st.markdown("</div>", unsafe_allow_html=True)
 
     _pw_end()
 

@@ -694,44 +694,83 @@ def sync_master_to_checklist(trip_id, item_ids):
 
 
 def sync_master_to_checklist_with_qty(trip_id, qty_map):
+    """Batch-optimized: assign items ke checklist kelompok, hindari N+1 query."""
+    if not qty_map:
+        return 0
     members = get_members(trip_id)
     added = 0
-    for iid, qty in qty_map.items():
-        item = get_item_master(iid)
-        if not item:
-            continue
-        qty = max(1, int(qty))
-        for n in range(1, qty + 1):
-            nama = "{} #{}".format(item["nama_item"], n) if qty > 1 else item["nama_item"]
-            if item["tujuan"] == "Kelompok":
-                exists = qv("SELECT COUNT(*) FROM trip_checklist_group WHERE trip_id=%s AND item_id=%s AND nama_item=%s",
-                            (trip_id, iid, nama))
-                if not exists:
-                    run("""INSERT INTO trip_checklist_group
-                            (trip_id,item_id,nama_item,category_id,label,sumber,sudah_siap)
-                            VALUES(%s,%s,%s,%s,%s,'Master',FALSE)""",
-                        (trip_id, iid, nama, item["category_id"], item["label"]))
-                    added += 1
-            else:
-                for m in members:
-                    exists = qv("SELECT COUNT(*) FROM trip_checklist_personal WHERE trip_id=%s AND member_id=%s AND item_id=%s AND nama_item=%s",
-                                (trip_id, m["id"], iid, nama))
-                    if not exists:
-                        run("""INSERT INTO trip_checklist_personal
-                                (trip_id,member_id,item_id,nama_item,category_id,label,sumber,sudah_siap)
-                                VALUES(%s,%s,%s,%s,%s,%s,'Master',FALSE)""",
-                            (trip_id, m["id"], iid, nama, item["category_id"], item["label"]))
+
+    # Ambil semua item sekaligus
+    iids = list(qty_map.keys())
+    if not iids:
+        return 0
+    placeholders = ",".join(["%s"] * len(iids))
+    all_items = {i["id"]: i for i in q(
+        "SELECT im.*, c.icon FROM items_master im LEFT JOIN categories c ON im.category_id=c.id WHERE im.id IN ({})".format(placeholders), iids)}
+
+    # Ambil existing group checklist sekaligus
+    existing_grp = set()
+    rows_grp = q("SELECT item_id, nama_item FROM trip_checklist_group WHERE trip_id=%s AND item_id IN ({})".format(placeholders),
+                 [trip_id] + iids)
+    for r in rows_grp:
+        existing_grp.add((r["item_id"], r["nama_item"]))
+
+    # Ambil existing personal checklist sekaligus
+    existing_per = set()
+    if members:
+        rows_per = q("SELECT member_id, item_id, nama_item FROM trip_checklist_personal WHERE trip_id=%s AND item_id IN ({})".format(placeholders),
+                     [trip_id] + iids)
+        for r in rows_per:
+            existing_per.add((r["member_id"], r["item_id"], r["nama_item"]))
+
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        for iid, qty in qty_map.items():
+            item = all_items.get(iid)
+            if not item:
+                continue
+            qty = max(1, int(qty))
+            for n in range(1, qty + 1):
+                nama = "{} #{}".format(item["nama_item"], n) if qty > 1 else item["nama_item"]
+                if item["tujuan"] == "Kelompok":
+                    if (iid, nama) not in existing_grp:
+                        cur.execute("""INSERT INTO trip_checklist_group
+                                (trip_id,item_id,nama_item,category_id,label,sumber,sudah_siap)
+                                VALUES(%s,%s,%s,%s,%s,'Master',FALSE)""",
+                            (trip_id, iid, nama, item["category_id"], item["label"]))
+                        existing_grp.add((iid, nama))
                         added += 1
+                else:
+                    for m in members:
+                        if (m["id"], iid, nama) not in existing_per:
+                            cur.execute("""INSERT INTO trip_checklist_personal
+                                    (trip_id,member_id,item_id,nama_item,category_id,label,sumber,sudah_siap)
+                                    VALUES(%s,%s,%s,%s,%s,%s,'Master',FALSE)""",
+                                (trip_id, m["id"], iid, nama, item["category_id"], item["label"]))
+                            existing_per.add((m["id"], iid, nama))
+                            added += 1
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        release_connection(conn)
     return added
 
 
 def sync_master_to_personal_checklist(trip_id, member_id, qty_map):
-    """Assign item master ke checklist personal satu anggota tertentu."""
+    """Assign item master ke checklist personal satu anggota tertentu.
+    Item dengan tujuan 'Kelompok' dimasukkan ke checklist kelompok, bukan personal."""
     added = 0
     for iid, qty in qty_map.items():
         item = get_item_master(iid)
         if not item: continue
         qty = max(1, int(qty))
+        # Item Kelompok → masuk ke checklist kelompok, bukan personal
+        if item["tujuan"] == "Kelompok":
+            added += sync_master_to_checklist_with_qty(trip_id, {iid: qty})
+            continue
         for n in range(1, qty + 1):
             nama = "{} #{}".format(item["nama_item"], n) if qty > 1 else item["nama_item"]
             exists = qv("SELECT COUNT(*) FROM trip_checklist_personal WHERE trip_id=%s AND member_id=%s AND item_id=%s AND nama_item=%s",
